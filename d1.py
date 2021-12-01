@@ -5,7 +5,6 @@ Advent Of Code 2021 Day 1
 
 import sys
 import argparse
-import fileinput
 
 
 def d1p1(args):
@@ -32,17 +31,16 @@ def d1p2(args):
             # and the last value for depths[(window_i + 1) % WIN_SIZE] sum
             window_i = line_index % WIN_SIZE
 
-            # For every window sum other than the one we completed on the last line
-            # add depth
-            for i in range(WIN_SIZE - 1):
-                depths[(window_i + 1 + i) % WIN_SIZE] += depth
-
             # If enough lines have been read for the window sums to be complete
             # check if the sums are increasing
             if (line_index >= (WIN_SIZE + window_i) and
-                depths[(window_i + 1) % WIN_SIZE] > depths[window_i]):
+                (depths[(window_i + 1) % WIN_SIZE] + depth) > depths[window_i]):
                 increasing += 1
-            depths[window_i] = depth
+
+            # Reset the window that has just finished
+            depths[window_i] = 0
+            # Update all the window sums
+            depths = [window_sum + depth for window_sum in depths]
 
     print(increasing)
 
@@ -51,6 +49,7 @@ puzzles = {
     'd1p1' : d1p1,
     'd1p2' : d1p2,
 }
+
 
 def add_arguments(parser):
     parser.add_argument('-p', '--puzzle', help="Which puzzle to run", choices=puzzles.keys(), required=True)
