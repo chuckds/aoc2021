@@ -20,17 +20,18 @@ def d1p1(args):
 
 
 def d1p2(args):
+    WIN_SIZE = 3
     with open(args.input) as f:
-        depths = [0] * 3
+        depths = [0] * WIN_SIZE
         increasing = 0
-        for i, depth in enumerate(f):
-            m3 = i % 3
-            depth = int(depth)
-            depths[(m3 + 1) % 3] += depth
-            depths[(m3 + 2) % 3] += depth
-            if i > (2 + m3) and depths[(m3 + 1) % 3] > depths[m3]:
+        for line_index, line in enumerate(f):
+            window_i = line_index % WIN_SIZE
+            depth = int(line)
+            depths[(window_i + 1) % WIN_SIZE] += depth
+            depths[(window_i + 2) % WIN_SIZE] += depth
+            if line_index >= (WIN_SIZE + window_i) and depths[(window_i + 1) % WIN_SIZE] > depths[window_i]:
                 increasing += 1
-            depths[m3] = depth
+            depths[window_i] = depth
 
     print(increasing)
 
