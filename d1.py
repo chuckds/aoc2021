@@ -21,29 +21,29 @@ def d1p1(args):
 
 def d1p2(args):
     with open(args.input) as f:
-        f3depths = int(next(f))
+        f3depths = 0
         s3depths = 0
         t3depths = 0
         increasing = 0
         for i, depth in enumerate(f):
-            m3 = (i + 1) % 3
+            m3 = i % 3
             depth = int(depth)
             if m3 == 0:
                 s3depths += depth
                 t3depths += depth
-                if s3depths > f3depths:
+                if i > 2 and s3depths > f3depths:
                     increasing += 1
                 f3depths = depth
             elif m3 == 1:
                 t3depths += depth
                 f3depths += depth
-                if i + 1 > 3 and t3depths > s3depths:
+                if i > 3 and t3depths > s3depths:
                     increasing += 1
                 s3depths = depth
             elif m3 == 2:
                 f3depths += depth
                 s3depths += depth
-                if i + 1 > 4 and f3depths > t3depths:
+                if i > 4 and f3depths > t3depths:
                     increasing += 1
                 t3depths = depth
     print(increasing)
