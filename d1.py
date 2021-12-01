@@ -21,15 +21,26 @@ def d1p1(args):
 
 def d1p2(args):
     WIN_SIZE = 3
+    increasing = 0
+
     with open(args.input) as f:
+        # Create a list to store the sums for each concurrent 'window'
         depths = [0] * WIN_SIZE
-        increasing = 0
         for line_index, line in enumerate(f):
-            window_i = line_index % WIN_SIZE
             depth = int(line)
-            depths[(window_i + 1) % WIN_SIZE] += depth
-            depths[(window_i + 2) % WIN_SIZE] += depth
-            if line_index >= (WIN_SIZE + window_i) and depths[(window_i + 1) % WIN_SIZE] > depths[window_i]:
+            # This line marks the start of a fresh depth[window_i] sum
+            # and the last value for depths[(window_i + 1) % WIN_SIZE] sum
+            window_i = line_index % WIN_SIZE
+
+            # For every window sum other than the one we completed on the last line
+            # add depth
+            for i in range(WIN_SIZE - 1):
+                depths[(window_i + 1 + i) % WIN_SIZE] += depth
+
+            # If enough lines have been read for the window sums to be complete
+            # check if the sums are increasing
+            if (line_index >= (WIN_SIZE + window_i) and
+                depths[(window_i + 1) % WIN_SIZE] > depths[window_i]):
                 increasing += 1
             depths[window_i] = depth
 
