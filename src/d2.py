@@ -8,11 +8,11 @@ import time
 import argparse
 
 
-def p2(args):
+def calc_params(filename):
     horiz = 0
     depth = 0
     aim = 0
-    with open(args.input) as f:
+    with open(filename) as f:
         for line in f:
             action, value = line.split()
             value = int(value)
@@ -24,24 +24,17 @@ def p2(args):
             elif action == 'down':
                 aim += value
 
+    return horiz, depth, aim
+
+
+def p2(args):
+    horiz, depth, aim = calc_params(args.input)
     print(f"Horizontal {horiz}, depth {depth}")
     return horiz * depth
 
 
 def p1(args):
-    horiz = 0
-    depth = 0
-    with open(args.input) as f:
-        for line in f:
-            action, value = line.split()
-            value = int(value)
-            if action == 'forward':
-                horiz += value
-            elif action == 'up':
-                depth -= value
-            elif action == 'down':
-                depth += value
-
+    horiz, _, depth = calc_params(args.input)
     print(f"Horizontal {horiz}, depth {depth}")
     return horiz * depth
 
