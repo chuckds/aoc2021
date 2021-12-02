@@ -4,6 +4,7 @@ Advent Of Code 2021 Day 1
 """
 
 import sys
+import time
 import argparse
 import collections
 
@@ -43,8 +44,11 @@ def main(cli_args):
     add_arguments(parser)
     args = parser.parse_args(cli_args)
 
+    start = time.perf_counter()
     print(d1p1(args))
     print(d1p2(args))
+    stop = time.perf_counter()
+    print(f"Elapsed: {stop - start}s")
 
 
 if __name__ == "__main__":
