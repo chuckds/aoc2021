@@ -8,7 +8,7 @@ import time
 import argparse
 
 
-def d1p2(args):
+def p2(args):
     horiz = 0
     depth = 0
     aim = 0
@@ -24,12 +24,11 @@ def d1p2(args):
             elif action == 'down':
                 aim += value
 
-
     print(f"Horizontal {horiz}, depth {depth}")
     return horiz * depth
 
 
-def d1p1(args):
+def p1(args):
     horiz = 0
     depth = 0
     with open(args.input) as f:
@@ -42,7 +41,6 @@ def d1p1(args):
                 depth -= value
             elif action == 'down':
                 depth += value
-
 
     print(f"Horizontal {horiz}, depth {depth}")
     return horiz * depth
@@ -58,8 +56,8 @@ def main(cli_args):
     args = parser.parse_args(cli_args)
 
     start = time.perf_counter()
-    print(d1p1(args))
-    print(d1p2(args))
+    print(p1(args))
+    print(p2(args))
     stop = time.perf_counter()
     print(f"Elapsed: {stop - start}s")
 
