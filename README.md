@@ -1,5 +1,7 @@
 # Advent of Code 2021
 
+https://adventofcode.com/2021/
+
 First go at this, lets see what happens
 
 Current pattern to run is:
