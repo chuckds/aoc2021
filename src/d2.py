@@ -5,7 +5,6 @@ Advent Of Code 2021 Day 2
 
 import sys
 import time
-import argparse
 
 
 def calc_params(filename):
@@ -27,30 +26,22 @@ def calc_params(filename):
     return horiz, depth, aim
 
 
-def p2(args):
-    horiz, depth, aim = calc_params(args.input)
-    print(f"Horizontal {horiz}, depth {depth}")
-    return horiz * depth
+def p2(input_file):
+    horizontal, depth, aim = calc_params(input_file)
+    print(f"{horizontal=}, {depth=}")
+    return horizontal * depth
 
 
-def p1(args):
-    horiz, _, depth = calc_params(args.input)
-    print(f"Horizontal {horiz}, depth {depth}")
-    return horiz * depth
-
-
-def add_arguments(parser):
-    parser.add_argument('-i', '--input', help="Input file")
+def p1(input_file):
+    horizontal, _, depth = calc_params(input_file)
+    print(f"{horizontal=}, {depth=}")
+    return horizontal * depth
 
 
 def main(cli_args):
-    parser = argparse.ArgumentParser()
-    add_arguments(parser)
-    args = parser.parse_args(cli_args)
-
     start = time.perf_counter()
-    print(p1(args))
-    print(p2(args))
+    print(p1(cli_args[0]))
+    print(p2(cli_args[0]))
     stop = time.perf_counter()
     print(f"Elapsed: {stop - start}s")
 

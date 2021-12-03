@@ -5,7 +5,6 @@ Advent Of Code 2021 Day 1
 
 import sys
 import time
-import argparse
 import collections
 
 
@@ -27,26 +26,18 @@ def count_increasing_sliding_windows(filename, window_size):
     return increasing
 
 
-def d1p1(args):
-    return count_increasing_sliding_windows(args.input, 1)
+def d1p1(input_file):
+    return count_increasing_sliding_windows(input_file, 1)
 
 
-def d1p2(args):
-    return count_increasing_sliding_windows(args.input, 3)
-
-
-def add_arguments(parser):
-    parser.add_argument('-i', '--input', help="Input file")
+def d1p2(input_file):
+    return count_increasing_sliding_windows(input_file, 3)
 
 
 def main(cli_args):
-    parser = argparse.ArgumentParser()
-    add_arguments(parser)
-    args = parser.parse_args(cli_args)
-
     start = time.perf_counter()
-    print(d1p1(args))
-    print(d1p2(args))
+    print(d1p1(cli_args[0]))
+    print(d1p2(cli_args[0]))
     stop = time.perf_counter()
     print(f"Elapsed: {stop - start}s")
 

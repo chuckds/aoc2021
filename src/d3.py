@@ -5,7 +5,6 @@ Advent Of Code 2021 Day 3
 
 import sys
 import time
-import argparse
 import collections
 
 
@@ -27,9 +26,9 @@ def partition_by_char(to_partition, char_i):
     return by_char
 
 
-def p2(args):
+def p2(input_file):
     # Split the input into lists depending on what the line starts with
-    with open(args.input) as f:
+    with open(input_file) as f:
         by_bit_value = partition_by_char(f, 0)
 
     # Assign the lists to oxygen or co2 based on populatarity
@@ -48,10 +47,10 @@ def p2(args):
     return oxygen * co2
 
 
-def p1(args):
+def p1(input_file):
     counts = None
 
-    with open(args.input) as f:
+    with open(input_file) as f:
         for line in f:
             if counts is None:
                 counts = [0] * len(line.strip())
@@ -65,18 +64,10 @@ def p1(args):
     return gamma * epsilon
 
 
-def add_arguments(parser):
-    parser.add_argument('-i', '--input', help="Input file")
-
-
 def main(cli_args):
-    parser = argparse.ArgumentParser()
-    add_arguments(parser)
-    args = parser.parse_args(cli_args)
-
     start = time.perf_counter()
-    print(p1(args))
-    print(p2(args))
+    print(p1(cli_args[0]))
+    print(p2(cli_args[0]))
     stop = time.perf_counter()
     print(f"Elapsed: {stop - start}s")
 
