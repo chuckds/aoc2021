@@ -28,9 +28,11 @@ def partition_by_char(to_partition, char_i):
 
 
 def p2(args):
+    # Split the input into lists depending on what the line starts with
     with open(args.input) as f:
         by_bit_value = partition_by_char(f, 0)
 
+    # Assign the lists to oxygen or co2 based on populatarity
     if len(by_bit_value['0']) > len(by_bit_value['1']):
         oxygen_nums = by_bit_value['0']
         co2_nums = by_bit_value['1']
