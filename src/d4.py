@@ -16,6 +16,7 @@ class BingoBoard:
         self.marked_cols = collections.defaultdict(int)
         for row_i, row in enumerate(rows):
             for col_i, number in enumerate(row):
+                # Assume it is possible for the same number to appear more than once
                 self.unmarked_numbers[number].append((row_i, col_i))
 
     def mark_number(self, number):
@@ -38,7 +39,7 @@ class BingoBoard:
         return cls(rows)
 
 
-def p1(input_file):
+def parse_calls_and_boards(input_file):
     bingo_boards = []
 
     with open(input_file) as f:
@@ -53,6 +54,32 @@ def p1(input_file):
                 board_lines = []
     if board_lines:
         bingo_boards.append(BingoBoard.from_lines(board_lines))
+    return calls, bingo_boards
+
+
+def p2(input_file):
+    calls, bingo_boards = parse_calls_and_boards(input_file)
+
+    for call in calls:
+        for board in bingo_boards:
+            board.mark_number(call)
+        
+        if len(bingo_boards) == 1 and bingo_boards[0].has_won():
+            # Last board has won
+            loser = bingo_boards[0]
+            break
+
+        # Get rid of the boards that have won
+        bingo_boards = [b for b in bingo_boards if not b.has_won()]
+
+    sum_unmarked = loser.sum_unmarked_get()
+
+    print(f"{call=} {sum_unmarked=}")
+    return call * sum_unmarked
+
+
+def p1(input_file):
+    calls, bingo_boards = parse_calls_and_boards(input_file)
 
     for call in calls:
         for board in bingo_boards:
@@ -61,9 +88,8 @@ def p1(input_file):
         if winners:
             break
     
-    if winners:
-        # What if there's more than one?
-        sum_unmarked = winners[0].sum_unmarked_get()
+    # What if there's more than one?
+    sum_unmarked = winners[0].sum_unmarked_get()
 
     print(f"{call=} {sum_unmarked=}")
     return call * sum_unmarked
@@ -72,6 +98,7 @@ def p1(input_file):
 def main(cli_args):
     start = time.perf_counter()
     print(p1(cli_args[0]))
+    print(p2(cli_args[0]))
     stop = time.perf_counter()
     print(f"Elapsed: {stop - start}s")
 
