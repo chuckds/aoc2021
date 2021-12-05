@@ -6,9 +6,10 @@ Advent Of Code 2021 Day 3
 import sys
 import time
 import collections
+from typing import Iterable, Optional
 
 
-def p2_find_val(bin_str_list, most_pop):
+def p2_find_val(bin_str_list: list[str], most_pop: bool) -> str:
     for bit_i in range(1, len(bin_str_list[0])):
         by_bit_value = partition_by_char(bin_str_list, bit_i)
         if len(by_bit_value['0']) > len(by_bit_value['1']):
@@ -17,16 +18,17 @@ def p2_find_val(bin_str_list, most_pop):
             bin_str_list = by_bit_value['1'] if most_pop else by_bit_value['0']
         if len(bin_str_list) == 1:
             return bin_str_list[0]
+    assert False
 
 
-def partition_by_char(to_partition, char_i):
+def partition_by_char(to_partition: Iterable[str], char_i: int) -> dict[str, list[str]]:
     by_char = collections.defaultdict(list)
     for string in to_partition:
         by_char[string[char_i]].append(string.strip())
     return by_char
 
 
-def p2(input_file):
+def p2(input_file: str) -> int:
     # Split the input into lists depending on what the line starts with
     with open(input_file) as f:
         by_bit_value = partition_by_char(f, 0)
@@ -47,12 +49,12 @@ def p2(input_file):
     return oxygen * co2
 
 
-def p1(input_file):
-    counts = None
+def p1(input_file: str) -> int:
+    counts: list[int] = []
 
     with open(input_file) as f:
         for line in f:
-            if counts is None:
+            if not counts:
                 counts = [0] * len(line.strip())
             for i, bit in enumerate(line.strip()):
                 counts[i] += 1 if int(bit) else -1
@@ -64,12 +66,13 @@ def p1(input_file):
     return gamma * epsilon
 
 
-def main(cli_args):
+def main(cli_args: list[str]) -> int:
     start = time.perf_counter()
     print(p1(cli_args[0]))
     print(p2(cli_args[0]))
     stop = time.perf_counter()
     print(f"Elapsed: {stop - start}s")
+    return 0
 
 
 if __name__ == "__main__":

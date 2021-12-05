@@ -8,8 +8,8 @@ import time
 import collections
 
 
-def count_increasing_sliding_windows(filename, window_size):
-    increasing = 0
+def count_increasing_sliding_windows(filename: str, window_size: int) -> int:
+    increasing: int = 0
 
     with open(filename) as f:
         depths = collections.deque(int(next(f))
@@ -26,20 +26,21 @@ def count_increasing_sliding_windows(filename, window_size):
     return increasing
 
 
-def d1p1(input_file):
+def d1p1(input_file: str) -> int:
     return count_increasing_sliding_windows(input_file, 1)
 
 
-def d1p2(input_file):
+def d1p2(input_file: str) -> int:
     return count_increasing_sliding_windows(input_file, 3)
 
 
-def main(cli_args):
+def main(cli_args: list[str]) -> int:
     start = time.perf_counter()
     print(d1p1(cli_args[0]))
     print(d1p2(cli_args[0]))
     stop = time.perf_counter()
     print(f"Elapsed: {stop - start}s")
+    return 0
 
 
 if __name__ == "__main__":

@@ -7,14 +7,14 @@ import sys
 import time
 
 
-def calc_params(filename):
-    horiz = 0
-    depth = 0
-    aim = 0
+def calc_params(filename: str) -> tuple[int, int, int]:
+    horiz: int = 0
+    depth: int = 0
+    aim: int = 0
     with open(filename) as f:
         for line in f:
-            action, value = line.split()
-            value = int(value)
+            action, value_str = line.split()
+            value = int(value_str)
             if action == 'forward':
                 horiz += value
                 depth += aim * value
@@ -26,24 +26,25 @@ def calc_params(filename):
     return horiz, depth, aim
 
 
-def p2(input_file):
+def p2(input_file: str) -> int:
     horizontal, depth, aim = calc_params(input_file)
     print(f"{horizontal=}, {depth=}")
     return horizontal * depth
 
 
-def p1(input_file):
+def p1(input_file: str) -> int:
     horizontal, _, depth = calc_params(input_file)
     print(f"{horizontal=}, {depth=}")
     return horizontal * depth
 
 
-def main(cli_args):
+def main(cli_args: list[str]) -> int:
     start = time.perf_counter()
     print(p1(cli_args[0]))
     print(p2(cli_args[0]))
     stop = time.perf_counter()
     print(f"Elapsed: {stop - start}s")
+    return 0
 
 
 if __name__ == "__main__":
