@@ -3,6 +3,8 @@
 Advent Of Code 2021 Day 5
 """
 
+from __future__ import annotations
+
 import sys
 import time
 import collections
@@ -39,22 +41,20 @@ class Line:
         for i in range(num_steps + 1):
             yield Point(self.start.x + step_x * i, self.start.y + step_y * i)
 
+    @classmethod
+    def from_str(cls, line_str: str) -> Line:
+        return cls(*[Point.from_str(point_str) for point_str in line_str.split(' -> ')])
+
 
 def safe_point(input_file: str, allow_45: bool = False) -> int:
-    lines: list[Line] = []
-    with open(input_file) as f:
-        for line in f:
-            points = [Point.from_str(point_str)
-                      for point_str in line.split(' -> ')]
-            lines.append(Line(points[0], points[1]))
-
     grid: dict[tuple[int, int], int] = collections.defaultdict(int)
-    for vent_line in lines:
-        for point in vent_line.points_between(allow_45):
-            grid[(point.x, point.y)] += 1
 
-    safe_points = [p for p, count in grid.items() if count >= 2]
-    return len(safe_points)
+    with open(input_file) as f:
+        for line_str in f:
+            for point in Line.from_str(line_str).points_between(allow_45):
+                grid[(point.x, point.y)] += 1
+
+    return sum(1 for count in grid.values() if count >= 2)
 
 
 def p2(input_file: str) -> int:
