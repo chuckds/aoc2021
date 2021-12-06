@@ -44,6 +44,7 @@ class BingoBoard:
 def parse_calls_and_boards(input_file: str) -> tuple[list[int], list[BingoBoard]]:
     bingo_boards: list[BingoBoard] = []
 
+    # Have to load the whole input file into memory :(
     with open(input_file) as f:
         calls = [int(val) for val in next(f).strip().split(',')]
         board_lines = []

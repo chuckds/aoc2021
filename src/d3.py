@@ -30,6 +30,7 @@ def partition_by_char(to_partition: Iterable[str], char_i: int) -> dict[str, lis
 
 def p2(input_file: str) -> int:
     # Split the input into lists depending on what the line starts with
+    # Sadly means loading the whole of the input into memory :(
     with open(input_file) as f:
         by_bit_value = partition_by_char(f, 0)
 
