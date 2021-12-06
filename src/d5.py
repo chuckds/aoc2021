@@ -70,7 +70,7 @@ def main(cli_args: list[str]) -> int:
     print(p1(cli_args[0]))
     print(p2(cli_args[0]))
     stop = time.perf_counter()
-    print(f"Elapsed: {stop - start}s")
+    print(f"Elapsed: {stop - start:.6f}s")
     return 0
 
 
