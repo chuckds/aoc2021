@@ -16,8 +16,10 @@ def count_fish(input_file: str, num_days: int) -> int:
 
     for _ in range(num_days):
         popping = num_by_days_to_pop.popleft()
-        num_by_days_to_pop[6] += popping # Reset days to pop for those that just have
-        num_by_days_to_pop.append(popping) # Add the new kids
+        # Reset days-to-pop to 6 for those that just have popped
+        num_by_days_to_pop[6] += popping
+        # Add the new kids with days-to-pop of 8
+        num_by_days_to_pop.append(popping)
 
     return sum(num_by_days_to_pop)
 
