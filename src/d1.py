@@ -3,8 +3,6 @@
 Advent Of Code 2021 Day 1
 """
 
-from __future__ import annotations
-
 import sys
 import time
 import collections
