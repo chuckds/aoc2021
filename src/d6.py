@@ -9,17 +9,17 @@ import collections
 
 
 def count_fish(input_file: str, num_days: int) -> int:
-    num_by_age = collections.deque([0] * 9, maxlen=9)
+    num_by_days_to_pop = collections.deque([0] * 9, maxlen=9)
     with open(input_file) as f:
-        for age_str in next(f).split(','):
-            num_by_age[int(age_str)] += 1
+        for days_to_pop_str in next(f).split(','):
+            num_by_days_to_pop[int(days_to_pop_str)] += 1
 
     for _ in range(num_days):
-        popping = num_by_age.popleft()
-        num_by_age[6] += popping
-        num_by_age.append(popping)
+        popping = num_by_days_to_pop.popleft()
+        num_by_days_to_pop[6] += popping # Reset days to pop for those that just have
+        num_by_days_to_pop.append(popping) # Add the new kids
 
-    return sum(num_by_age)
+    return sum(num_by_days_to_pop)
 
 
 def p2(input_file: str) -> int:
