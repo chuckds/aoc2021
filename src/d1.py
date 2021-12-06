@@ -3,6 +3,8 @@
 Advent Of Code 2021 Day 1
 """
 
+from __future__ import annotations
+
 import sys
 import time
 import collections
@@ -26,18 +28,18 @@ def count_increasing_sliding_windows(filename: str, window_size: int) -> int:
     return increasing
 
 
-def d1p1(input_file: str) -> int:
+def p1(input_file: str) -> int:
     return count_increasing_sliding_windows(input_file, 1)
 
 
-def d1p2(input_file: str) -> int:
+def p2(input_file: str) -> int:
     return count_increasing_sliding_windows(input_file, 3)
 
 
 def main(cli_args: list[str]) -> int:
     start = time.perf_counter()
-    print(d1p1(cli_args[0]))
-    print(d1p2(cli_args[0]))
+    print(p1(cli_args[0]))
+    print(p2(cli_args[0]))
     stop = time.perf_counter()
     print(f"Elapsed: {stop - start}s")
     return 0
