@@ -7,7 +7,6 @@ import sys
 import math
 import time
 import statistics
-import collections
 
 
 def calc_fuel_required(target_posn: int, horiz_positions: list[int], triangular_fuel: bool = False) -> int:
@@ -25,6 +24,7 @@ def calc_fuel(input_file: str, triangular_fuel: bool = False) -> int:
         horiz_positions = [int(x_str) for x_str in next(f).split(',')]
     
     if triangular_fuel:
+        # Best position is either mean rounded up or down, try both pick best
         mean = statistics.mean(horiz_positions)
         fuel_targets = [(calc_fuel_required(target, horiz_positions, triangular_fuel), target)
                         for target in range(math.floor(mean), math.ceil(mean) + 1)]
