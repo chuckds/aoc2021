@@ -1,6 +1,6 @@
 #!/bin/env python3
 """
-Advent Of Code 2021 Day 5
+Advent Of Code 2021 Day 7
 """
 
 import sys
