@@ -6,72 +6,78 @@ Advent Of Code 2021 Day 8
 import sys
 import time
 import collections
-from typing import Set
 
 
-all_segments_set = set('abcdefg')
-
-per_number_segments = [
-    'abcefg',   # 0
-    'cf',       # 1
-    'acdeg',    # 2
-    'acdfg',    # 3
-    'bcdf',     # 4
-    'abdfg',    # 5
-    'abdefg',   # 6
-    'acf',      # 7
-    'abcdefg',  # 8
-    'abcdfg',   # 9
-]
-
-segments_to_number = {segments : number for number, segments in enumerate(per_number_segments)}
+numbers_to_unique_num_segments = {
+    1 : 2,
+    4 : 4,
+    7 : 3,
+    8 : 7,
+}
 
 
 class WireSegment:
     def __init__(self) -> None:
-        self.broken_to_real_seg: dict[str, str] = {}
+        self.txt_to_num: dict[str, int] = {}
+        self.known_numbers: dict[int, set[str]] = {}
+
+    def add_num_to_txt(self, num: int, txt: set[str]) -> None:
+        self.txt_to_num[''.join(sorted(txt))] = num
+        self.known_numbers[num] = txt
 
     def solve(self, signal_patterns: list[str]) -> None:
-        known_numbers: dict[int, set[str]] = {}
         real_to_broken_seg = {}
         signals_by_len = collections.defaultdict(list)
-        for signal in signal_patterns:
-            signals_by_len[len(signal)].append(signal)
+        for signal_str in signal_patterns:
+            signals_by_len[len(signal_str)].append(set(signal_str))
 
-        # Add the unique numbers
-        known_numbers[1] = set(signals_by_len[2][0])
-        known_numbers[4] = set(signals_by_len[4][0])
-        known_numbers[7] = set(signals_by_len[3][0])
-
-        # 'a' segment is the segment that is present in 7 but not 1
-        real_to_broken_seg['a'] = (known_numbers[7] - known_numbers[1]).pop()
+        # Add the numbers with unique number of segments used: 1, 4, 7 and 8
+        for number, num_segments in numbers_to_unique_num_segments.items():
+            self.add_num_to_txt(number, signals_by_len[num_segments][0])
 
         # Find the segments that the signals of length 6 have in common
         # This translates to the numbers 0, 6 and 9
         # The true segments these have in common are a, b, f and g
-        len6_in_common = set.intersection(*[set(signal) for signal in signals_by_len[6]])
+        len6_in_common = set.intersection(*[signal for signal in signals_by_len[6]])
 
         # Since 7 uses segments a, c and f taking out the above leaves segment c
-        real_to_broken_seg['c'] = (known_numbers[7] - len6_in_common).pop()
+        real_to_broken_seg['c'] = (self.known_numbers[7] - len6_in_common).pop()
         # Now 'c' is known the other segment for 1 is 'f'
-        real_to_broken_seg['f'] = (known_numbers[1] - set(real_to_broken_seg['c'])).pop()
+        real_to_broken_seg['f'] = (self.known_numbers[1] - set(real_to_broken_seg['c'])).pop()
+        # Segments in 4 not used by 1 are b and d - of these ont b is in len6_in_common leaving d
+        real_to_broken_seg['d'] = (self.known_numbers[4] - self.known_numbers[1] - len6_in_common).pop()
 
-        # And so on...
-        real_to_broken_seg['g'] = (len6_in_common - known_numbers[4] - set(real_to_broken_seg['a'])).pop()
-        real_to_broken_seg['b'] = (len6_in_common - set(real_to_broken_seg.values())).pop()
-        real_to_broken_seg['d'] = (known_numbers[4] - set(real_to_broken_seg.values())).pop()
-        real_to_broken_seg['e'] = (all_segments_set - set(real_to_broken_seg.values())).pop()
+        # Work out which of the 3 numbers that use 5 segments (2, 3 and 5) are which
+        for signal in signals_by_len[5]:
+            if real_to_broken_seg['c'] not in signal:
+                # 5 doesn't use segment c
+                self.add_num_to_txt(5, signal)
+            elif real_to_broken_seg['f'] not in signal:
+                # 2 doesn't use segment f
+                self.add_num_to_txt(2, signal)
+            else:
+                # Only 3 uses both c and f
+                self.add_num_to_txt(3, signal)
 
-        # Flip the mapping to something useful
-        self.broken_to_real_seg = {broken : real for real, broken in real_to_broken_seg.items()}
+        # Work out which of the 3 numbers that use 6 segments (0,6 and 9) are which
+        for signal in signals_by_len[6]:
+            if real_to_broken_seg['c'] not in signal:
+                # Only 6 doesn't use c
+                self.add_num_to_txt(6, signal)
+            elif real_to_broken_seg['d'] not in signal:
+                # Only 0 doesn't use d
+                self.add_num_to_txt(0, signal)
+            else:
+                # Only 9 uses both c and d
+                self.add_num_to_txt(9, signal)
 
     def decode(self, value: str) -> int:
-        decoded_str = ''.join(sorted([self.broken_to_real_seg[segment] for segment in value]))
-        return segments_to_number[decoded_str]
+        return self.txt_to_num[''.join(sorted(value))]
 
 
-def p2(input_file: str) -> int:
-    result = 0
+def p1p2(input_file: str) -> tuple[int, int]:
+    unique_count = 0
+    output_value_sum = 0
     with open(input_file) as f:
         for line in f:
             signal_patterns, output_values = line.strip().split(' | ')
@@ -79,29 +85,17 @@ def p2(input_file: str) -> int:
             wire_segment.solve(signal_patterns.split())
             output_val_str = ''
             for output_value in output_values.split():
-                output_val_str += str(wire_segment.decode(output_value))
-            result += int(output_val_str)
+                output_number = wire_segment.decode(output_value)
+                unique_count += 1 if output_number in numbers_to_unique_num_segments else 0
+                output_val_str += str(output_number)
+            output_value_sum += int(output_val_str)
 
-    return result
-
-
-def p1(input_file: str) -> int:
-    unique_display_lens = {2, 3, 4, 7}
-    unique_count = 0
-    with open(input_file) as f:
-        for line in f:
-            signal_patterns, output_value = line.strip().split(' | ')
-            for display in output_value.split():
-                if len(display) in unique_display_lens:
-                    unique_count += 1
-
-    return unique_count
+    return unique_count, output_value_sum
 
 
 def main(cli_args: list[str]) -> int:
     start = time.perf_counter()
-    print(p1(cli_args[0]))
-    print(p2(cli_args[0]))
+    print(p1p2(cli_args[0]))
     stop = time.perf_counter()
     print(f"Elapsed: {stop - start:.6f}s")
     return 0
