@@ -60,17 +60,22 @@ def parse_calls_and_boards(input_file: str) -> tuple[list[int], list[BingoBoard]
     return calls, bingo_boards
 
 
-def p2(input_file: str) -> int:
+def p1p2(input_file: str) -> tuple[int, int]:
+    part_1_res = 0
     calls, bingo_boards = parse_calls_and_boards(input_file)
 
     for call in calls:
         for board in bingo_boards:
             board.mark_number(call)
         
-        if len(bingo_boards) == 1 and bingo_boards[0].has_won():
-            # Last board has won
-            loser = bingo_boards[0]
-            break
+        winners = [b for b in bingo_boards if b.has_won()]
+        if winners:
+            if len(bingo_boards) == 1:
+                # Last winner
+                loser = winners[0]
+                break
+            elif not part_1_res:
+                part_1_res = winners[0].sum_unmarked_get() * call
 
         # Get rid of the boards that have won
         bingo_boards = [b for b in bingo_boards if not b.has_won()]
@@ -78,30 +83,12 @@ def p2(input_file: str) -> int:
     sum_unmarked = loser.sum_unmarked_get()
 
     print(f"{call=} {sum_unmarked=}")
-    return call * sum_unmarked
-
-
-def p1(input_file: str) -> int:
-    calls, bingo_boards = parse_calls_and_boards(input_file)
-
-    for call in calls:
-        for board in bingo_boards:
-            board.mark_number(call)
-        winners = [b for b in bingo_boards if b.has_won()]
-        if winners:
-            break
-    
-    # What if there's more than one?
-    sum_unmarked = winners[0].sum_unmarked_get()
-
-    print(f"{call=} {sum_unmarked=}")
-    return call * sum_unmarked
+    return part_1_res, call * sum_unmarked
 
 
 def main(cli_args: list[str]) -> int:
     start = time.perf_counter()
-    print(p1(cli_args[0]))
-    print(p2(cli_args[0]))
+    print(p1p2(cli_args[0]))
     stop = time.perf_counter()
     print(f"Elapsed: {stop - start:.6f}s")
     return 0
