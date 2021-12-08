@@ -2,7 +2,7 @@
 
 # Fail fast
 set -e
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 
-mypy --strict ${SCRIPT_DIR}/*.py
-pytest ${SCRIPT_DIR}
+mypy --strict ${REPO_ROOT}/src/*.py
+pytest ${REPO_ROOT}/src
