@@ -44,22 +44,22 @@ class WireSegment:
         real_to_broken_seg['c'] = (self.known_numbers[7] - len6_in_common).pop()
         # Now 'c' is known the other segment for 1 is 'f'
         real_to_broken_seg['f'] = (self.known_numbers[1] - set(real_to_broken_seg['c'])).pop()
-        # Segments in 4 not used by 1 are b and d - of these ont b is in len6_in_common leaving d
+        # Segments in 4 not used by 1 are b and d - of these only b is in len6_in_common leaving d
         real_to_broken_seg['d'] = (self.known_numbers[4] - self.known_numbers[1] - len6_in_common).pop()
 
         # Work out which of the 3 numbers that use 5 segments (2, 3 and 5) are which
         for signal in signals_by_len[5]:
             if real_to_broken_seg['c'] not in signal:
-                # 5 doesn't use segment c
+                # Only 5 doesn't use segment c
                 self.add_num_to_txt(5, signal)
             elif real_to_broken_seg['f'] not in signal:
-                # 2 doesn't use segment f
+                # Only 2 doesn't use segment f
                 self.add_num_to_txt(2, signal)
             else:
                 # Only 3 uses both c and f
                 self.add_num_to_txt(3, signal)
 
-        # Work out which of the 3 numbers that use 6 segments (0,6 and 9) are which
+        # Work out which of the 3 numbers that use 6 segments (0, 6 and 9) are which
         for signal in signals_by_len[6]:
             if real_to_broken_seg['c'] not in signal:
                 # Only 6 doesn't use c
@@ -83,9 +83,11 @@ def p1p2(input_file: str) -> tuple[int, int]:
             signal_patterns, output_values = line.strip().split(' | ')
             wire_segment = WireSegment()
             wire_segment.solve(signal_patterns.split())
+            # Concatenate each digit in a string to get the actual value
             output_val_str = ''
             for output_value in output_values.split():
                 output_number = wire_segment.decode(output_value)
+                # Part 1 work
                 unique_count += 1 if output_number in numbers_to_unique_num_segments else 0
                 output_val_str += str(output_number)
             output_value_sum += int(output_val_str)
