@@ -64,7 +64,7 @@ def p1p2(input_file: str) -> tuple[int, int]:
     for basin_val, line_num, column_num in basins:
         basin_sizes.append(get_basin_size(lines, line_num, column_num))
 
-    print(f"{basins=} {basin_sizes=}")
+    print(f"{len(basins)=}")
     return (sum(lp[0] for lp in basins) + len(basins),
             math.prod(sorted(basin_sizes, reverse=True)[:3]))
 
