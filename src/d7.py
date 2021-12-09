@@ -14,37 +14,28 @@ def calc_triangular_fuel(target_posn: int, horiz_posns: list[int]) -> int:
                for horiz_posn in horiz_posns)
 
 
-def calc_fuel(input_file: str, triangular_fuel: bool = False) -> int:
+def p1p2(input_file: str) -> tuple[int, int]:
     with open(input_file) as f:
         horiz_positions = [int(x_str) for x_str in next(f).split(',')]
     
-    if triangular_fuel:
-        # Best position is either mean rounded up or down, try both pick best
-        mean = statistics.mean(horiz_positions)
-        fuel_targets = [(calc_triangular_fuel(target, horiz_positions), target)
-                        for target in range(math.floor(mean), math.ceil(mean) + 1)]
-        fuel_required, best_position = min(fuel_targets, key=lambda x: x[0])
-    else:
-        best_position = int(statistics.median(horiz_positions))
-        fuel_required = sum(abs(best_position - horiz_position)
-                            for horiz_position in horiz_positions)
+    best_position = int(statistics.median(horiz_positions))
+    p1_fuel_required = sum(abs(best_position - horiz_position)
+                           for horiz_position in horiz_positions)
+    print(f"p1 {p1_fuel_required=} {best_position=}")
 
-    print(f"{fuel_required=} {best_position=}")
-    return fuel_required
+    # Best position is either mean rounded up or down, try both pick best
+    mean = statistics.mean(horiz_positions)
+    fuel_targets = [(calc_triangular_fuel(target, horiz_positions), target)
+                    for target in range(math.floor(mean), math.ceil(mean) + 1)]
+    fuel_required, best_position = min(fuel_targets, key=lambda x: x[0])
+    print(f"p2 {fuel_required=} {best_position=}")
 
-
-def p2(input_file: str) -> int:
-    return calc_fuel(input_file, True)
-
-
-def p1(input_file: str) -> int:
-    return calc_fuel(input_file)
+    return (p1_fuel_required, fuel_required)
 
 
 def main(cli_args: list[str]) -> int:
     start = time.perf_counter()
-    print(p1(cli_args[0]))
-    print(p2(cli_args[0]))
+    print(p1p2(cli_args[0]))
     stop = time.perf_counter()
     print(f"Elapsed: {stop - start:.6f}s")
     return 0
