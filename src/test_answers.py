@@ -4,7 +4,7 @@ import pathlib
 import importlib
 
 
-puzzle_re = re.compile(r"(?P<day>d[0-9]+)(?P<part>[^ ]+) (?P<input_file>[^ ]+) (?P<result>.*)")
+puzzle_re = re.compile(r"(?P<comment>#)?(?P<day>d[0-9]+)(?P<part>[^ ]+) (?P<input_file>[^ ]+) (?P<result>.*)")
 
 def get_puzzle_info(examples: bool) -> list[tuple[str, str, str, str]]:
     day_parts = []
@@ -13,6 +13,8 @@ def get_puzzle_info(examples: bool) -> list[tuple[str, str, str, str]]:
         for line in f:
             m = puzzle_re.match(line)
             assert m is not None
+            if m.group('comment'):
+                continue
             day = m.group('day')
             part = m.group('part')
             input_file = m.group('input_file')
