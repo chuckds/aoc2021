@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import sys
 import time
-import collections
 
 from typing import Optional
 
@@ -35,20 +34,26 @@ class Node:
 
 
 class Path:
-    def __init__(self, path: list[str],
-                 visited_lower_twice: bool = False,
-                 unique_nodes: Optional[set[str]] = None) -> None:
-        self.path = path
+    def __init__(self, lowercase_nodes_visited: set[str],
+                 visited_lower_twice: bool = False) -> None:
+        self.lowercase_nodes_visited = lowercase_nodes_visited
         self.visited_lower_twice = visited_lower_twice # Should really calculate this from the paths
-        self.unique_nodes = unique_nodes if unique_nodes else set(self.path)
 
     def add_node(self, node: Node) -> Path:
-        visited_lower_twice = self.visited_lower_twice or (node.islower and node.name in self.unique_nodes)
-        return Path(self.path + [node.name], visited_lower_twice, self.unique_nodes | set([node.name]))
+        visited_lower_twice = self.visited_lower_twice
+        new_lowercase_nodes_visited = self.lowercase_nodes_visited
+        if node.islower:
+            if node.name in self.lowercase_nodes_visited:
+                visited_lower_twice = True
+            else:
+                # Only create a new set if we need to
+                new_lowercase_nodes_visited = new_lowercase_nodes_visited | set([node.name])
+
+        return Path(new_lowercase_nodes_visited, visited_lower_twice)
 
     def can_visit(self, node: Node) -> bool:
         if self.visited_lower_twice and node.islower:
-            return node.name not in self.unique_nodes
+            return node.name not in self.lowercase_nodes_visited
         else:
             return True
 
@@ -59,10 +64,6 @@ def extend_paths_to_end(from_node: Node, paths: list[Path]) -> list[Path]:
 
     paths_to_end = []
     for next_node in from_node.connects:
-        if next_node.isstart:
-            # There's no going back (could be a condition in can_visit but
-            # fewer checks if put here)
-            continue
         paths_to_extend = [p.add_node(next_node) for p in paths if p.can_visit(next_node)]
         paths_to_end += extend_paths_to_end(next_node, paths_to_extend)
     return paths_to_end
@@ -76,11 +77,14 @@ def p1p2(input_file: str) -> tuple[int, int]:
             n1_name, n2_name = line.strip().split('-')
             n1 = Node.from_name(n1_name, graph)
             n2 = Node.from_name(n2_name, graph)
-            n1.add_link(n2)
-            n2.add_link(n1)
+            if not n2.isstart and not n1.isend:
+                # Don't add links back to start or out of end
+                n1.add_link(n2)
+            if not n1.isstart and not n2.isend:
+                n2.add_link(n1)
     
     complete_paths = extend_paths_to_end(Node.from_name('start', graph),
-                                         [Path(['start'])])
+                                         [Path(set())])
 
     return (len([p for p in complete_paths if not p.visited_lower_twice]),
             len(complete_paths))
