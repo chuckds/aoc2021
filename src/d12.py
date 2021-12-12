@@ -8,8 +8,6 @@ from __future__ import annotations
 import sys
 import time
 
-from typing import Optional
-
 GraphType = dict[str, "Node"]
 
 
@@ -58,14 +56,14 @@ class Path:
             return True
 
 
-def extend_paths_to_end(from_node: Node, paths: list[Path]) -> list[Path]:
-    if not paths or from_node.isend:
-        return paths
+def extend_path_to_end(from_node: Node, path: Path) -> list[Path]:
+    if from_node.isend:
+        return [path]
 
     paths_to_end = []
     for next_node in from_node.connects:
-        paths_to_extend = [p.add_node(next_node) for p in paths if p.can_visit(next_node)]
-        paths_to_end += extend_paths_to_end(next_node, paths_to_extend)
+        if path.can_visit(next_node):
+            paths_to_end += extend_path_to_end(next_node, path.add_node(next_node))
     return paths_to_end
 
 
@@ -77,14 +75,14 @@ def p1p2(input_file: str) -> tuple[int, int]:
             n1_name, n2_name = line.strip().split('-')
             n1 = Node.from_name(n1_name, graph)
             n2 = Node.from_name(n2_name, graph)
+            # Don't add links back to start or out of end
             if not n2.isstart and not n1.isend:
-                # Don't add links back to start or out of end
                 n1.add_link(n2)
             if not n1.isstart and not n2.isend:
                 n2.add_link(n1)
     
-    complete_paths = extend_paths_to_end(Node.from_name('start', graph),
-                                         [Path(set())])
+    complete_paths = extend_path_to_end(Node.from_name('start', graph),
+                                        Path(set()))
 
     return (len([p for p in complete_paths if not p.visited_lower_twice]),
             len(complete_paths))
