@@ -37,7 +37,7 @@ class Path:
     def __init__(self, lowercase_nodes_visited: set[str],
                  visited_lower_twice: bool = False) -> None:
         self.lowercase_nodes_visited = lowercase_nodes_visited
-        self.visited_lower_twice = visited_lower_twice # Should really calculate this from the paths
+        self.visited_lower_twice = visited_lower_twice
 
     def add_node(self, node: Node) -> Path:
         visited_lower_twice = self.visited_lower_twice
