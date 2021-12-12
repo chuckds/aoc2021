@@ -15,8 +15,6 @@ GraphType = dict[str, "Node"]
 
 
 class Node:
-    all: GraphType = {}
-
     def __init__(self, name: str) -> None:
         self.name = name
         self.isstart = name == 'start'
@@ -28,11 +26,11 @@ class Node:
         self.connects.append(to_node)
 
     @classmethod
-    def from_name(cls, name: str) -> Node:
-        node = cls.all.get(name, None)
+    def from_name(cls, name: str, graph: GraphType) -> Node:
+        node = graph.get(name, None)
         if not node:
             node = cls(name)
-            cls.all[name] = node
+            graph[name] = node
         return node
 
 
@@ -55,31 +53,34 @@ class Path:
             return True
 
 
-def extend_paths_to_end(graph: GraphType, from_node: Node, paths: list[Path]) -> list[Path]:
+def extend_paths_to_end(from_node: Node, paths: list[Path]) -> list[Path]:
     if not paths or from_node.isend:
         return paths
 
     paths_to_end = []
     for next_node in from_node.connects:
         if next_node.isstart:
+            # There's no going back (could be a condition in can_visit but
+            # fewer checks if put here)
             continue
         paths_to_extend = [p.add_node(next_node) for p in paths if p.can_visit(next_node)]
-        paths_to_end += extend_paths_to_end(graph, next_node, paths_to_extend)
+        paths_to_end += extend_paths_to_end(next_node, paths_to_extend)
     return paths_to_end
 
 
 def p1p2(input_file: str) -> tuple[int, int]:
     complete_paths = []
-    Node.all = {}
+    graph: GraphType = {}
     with open(input_file) as f:
         for line in f:
             n1_name, n2_name = line.strip().split('-')
-            n1 = Node.from_name(n1_name)
-            n2 = Node.from_name(n2_name)
+            n1 = Node.from_name(n1_name, graph)
+            n2 = Node.from_name(n2_name, graph)
             n1.add_link(n2)
             n2.add_link(n1)
     
-    complete_paths = extend_paths_to_end(Node.all,  Node.from_name('start'), [Path(['start'])])
+    complete_paths = extend_paths_to_end(Node.from_name('start', graph),
+                                         [Path(['start'])])
 
     return (len([p for p in complete_paths if not p.visited_lower_twice]),
             len(complete_paths))
