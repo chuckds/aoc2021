@@ -14,80 +14,61 @@ FoldType = tuple[str, int]
 
 class Grid:
     def __init__(self) -> None:
-        self.x_size = 0
-        self.y_size = 0
+        self.size = [0, 0]
         self.rows: dict[int, set[int]] = collections.defaultdict(set)
         self.cols: dict[int, set[int]] = collections.defaultdict(set)
 
     def add_dot(self, x: int, y: int) -> None:
         self.rows[y].add(x)
         self.cols[x].add(y)
-        self.x_size = max(self.x_size, x + 1)
-        self.y_size = max(self.y_size, y + 1)
-
-    def merge_line_into(self, a_line: int, dest_line: int, up: bool = True) -> None:
-        if up:
-            merging, update = self.rows, self.cols
-        else:
-            merging, update = self.cols, self.rows
-
-        for new_dot in merging[a_line] - merging[dest_line]:
-            merging[dest_line].add(new_dot)
-            update[new_dot].add(dest_line)
-
-    def fold_up(self, val: int) -> None:
-        for fold_line, into_line in zip(range(val + 1, self.y_size), range(val - 1, -1, -1)):
-            self.merge_line_into(fold_line, into_line)
-        self.y_size = val
-
-    def fold_left(self, val: int) -> None:
-        for fold_line, into_line in zip(range(val + 1, self.x_size), range(val - 1, -1, -1)):
-            self.merge_line_into(fold_line, into_line, False)
-        self.x_size = val
+        self.size = [max(self.size[0], x + 1), max(self.size[1], y + 1)]
 
     def fold(self, dimension: str, val: int) -> None:
-        if dimension == 'x':
-            self.fold_left(val)
+        is_fold_up = dimension == 'y'
+        if is_fold_up:
+            size_index = 1
+            merging, update = self.rows, self.cols
         else:
-            self.fold_up(val)
+            size_index = 0
+            merging, update = self.cols, self.rows
+
+        for fold_line, into_line in zip(range(val + 1, self.size[size_index]),
+                                        range(val - 1, -1, -1)):
+            for new_dot in merging[fold_line] - merging[into_line]:
+                merging[into_line].add(new_dot)
+                update[new_dot].add(into_line)
+        self.size[size_index] = val
 
     def num_dots(self) -> int:
         num_dots = 0
         for row_y, row in self.rows.items():
-            if row_y < self.y_size:
-                num_dots += sum(1 for d in row if d < self.x_size)
+            if row_y < self.size[1]:
+                num_dots += sum(1 for d in row if d < self.size[0])
         return num_dots
 
     def __str__(self) -> str:
-        result = ""
-        for y in range(0, self.y_size):
-            for x in range(0, self.x_size):
-                if x in self.rows.get(y, set()):
-                    result += "#"
-                else:
-                    result += "."
-            result += "\n"
-        return result
+        lines = [''.join(['#' if x in self.rows.get(y, set()) else '.'
+                          for x in range(0, self.size[0])])
+                 for y in range(0, self.size[1])]
+        return "\n".join(lines)
 
 
 def parse_input(input_file: str) -> tuple[Grid, list[FoldType]]:
     folds = []
     grid = Grid()
-    in_fold_section = False
     with open(input_file) as f:
         for line in f:
             line = line.strip()
-            if in_fold_section:
-                _, _, fold_line = line.split(' ')
-                dimension, value = fold_line.split('=')
-                folds.append((dimension, int(value)))
-            elif not line:
-                # Blank line that sepearated the dot section from the fold section
-                in_fold_section = True
-            else:
-                # Still in the dot section
+            if line:
                 x, y = line.split(',')
                 grid.add_dot(int(x), int(y))
+            else:
+                # Blank line separates the dot section from the fold section
+                break
+        for line in f:
+            _, _, fold_line = line.strip().split(' ')
+            dimension, value = fold_line.split('=')
+            folds.append((dimension, int(value)))
     return (grid, folds)
 
 
