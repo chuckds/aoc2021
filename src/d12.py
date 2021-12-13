@@ -32,39 +32,68 @@ class Cave:
 
 
 class Path:
-    def __init__(self, small_caves_visited: set[str],
+    def __init__(self, last_cave: Cave, small_caves_visited: set[str],
                  visited_small_twice: bool = False) -> None:
+        self.last_cave = last_cave
         self.small_caves_visited = small_caves_visited
         self.has_visited_small_twice = visited_small_twice
 
-    def add_node(self, node: Cave) -> Path:
+    def add_cave(self, cave: Cave) -> Path:
         has_visited_small_twice = self.has_visited_small_twice
         small_caves_visited = self.small_caves_visited
-        if node.issmall:
-            if node.name in self.small_caves_visited:
+        if cave.issmall:
+            if cave.name in self.small_caves_visited:
                 has_visited_small_twice = True
             else:
                 # Only create a new set if we need to
-                small_caves_visited = small_caves_visited | set([node.name])
+                small_caves_visited = small_caves_visited | set([cave.name])
 
-        return Path(small_caves_visited, has_visited_small_twice)
+        return Path(cave, small_caves_visited, has_visited_small_twice)
 
     def can_visit(self, node: Cave) -> bool:
-        if self.has_visited_small_twice and node.issmall:
+        if self.has_visited_small_twice and node.issmall and not node.isend:
             return node.name not in self.small_caves_visited
         else:
             return True
 
 
-def extend_path_to_end(from_node: Cave, path: Path) -> list[Path]:
-    if from_node.isend:
+def extend_path_to_end(path: Path) -> list[Path]:
+    if path.last_cave.isend:
         return [path]
 
     paths_to_end = []
-    for next_cave in from_node.connects:
+    for next_cave in path.last_cave.connects:
         if path.can_visit(next_cave):
-            paths_to_end += extend_path_to_end(next_cave, path.add_node(next_cave))
+            paths_to_end += extend_path_to_end(path.add_cave(next_cave))
     return paths_to_end
+
+
+def p1p2_nonrecursive(input_file: str) -> tuple[int, int]:
+    graph: GraphType = {}
+    with open(input_file) as f:
+        for line in f:
+            n1_name, n2_name = line.strip().split('-')
+            n1 = Cave.from_name(n1_name, graph)
+            n2 = Cave.from_name(n2_name, graph)
+            # Don't add links back to start or out of end
+            if not n2.isstart and not n1.isend:
+                n1.add_link(n2)
+            if not n1.isstart and not n2.isend:
+                n2.add_link(n1)
+    
+    complete_paths = []
+    paths = [Path(Cave.from_name('start', graph), set())]
+    while paths:
+        path = paths.pop()
+        if path.last_cave.isend:
+            complete_paths.append(path)
+        else:
+            paths += [path.add_cave(cave)
+                      for cave in path.last_cave.connects
+                      if path.can_visit(cave)]
+
+    return (len([p for p in complete_paths if not p.has_visited_small_twice]),
+            len(complete_paths))
 
 
 def p1p2(input_file: str) -> tuple[int, int]:
@@ -80,8 +109,8 @@ def p1p2(input_file: str) -> tuple[int, int]:
             if not n1.isstart and not n2.isend:
                 n2.add_link(n1)
     
-    complete_paths = extend_path_to_end(Cave.from_name('start', graph),
-                                        Path(set()))
+    complete_paths = extend_path_to_end(Path(Cave.from_name('start', graph),
+                                        set()))
 
     return (len([p for p in complete_paths if not p.has_visited_small_twice]),
             len(complete_paths))
