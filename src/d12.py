@@ -57,18 +57,7 @@ class Path:
             return True
 
 
-def extend_path_to_end(path: Path) -> list[Path]:
-    if path.last_cave.isend:
-        return [path]
-
-    paths_to_end = []
-    for next_cave in path.last_cave.connects:
-        if path.can_visit(next_cave):
-            paths_to_end += extend_path_to_end(path.add_cave(next_cave))
-    return paths_to_end
-
-
-def p1p2_nonrecursive(input_file: str) -> tuple[int, int]:
+def graph_from_input(input_file: str) -> GraphType:
     graph: GraphType = {}
     with open(input_file) as f:
         for line in f:
@@ -80,7 +69,12 @@ def p1p2_nonrecursive(input_file: str) -> tuple[int, int]:
                 n1.add_link(n2)
             if not n1.isstart and not n2.isend:
                 n2.add_link(n1)
-    
+    return graph
+
+
+def p1p2_nonrecursive(input_file: str) -> tuple[int, int]:
+    graph = graph_from_input(input_file)
+
     complete_paths = []
     paths = [Path(Cave.from_name('start', graph), set())]
     while paths:
@@ -96,18 +90,19 @@ def p1p2_nonrecursive(input_file: str) -> tuple[int, int]:
             len(complete_paths))
 
 
+def extend_path_to_end(path: Path) -> list[Path]:
+    if path.last_cave.isend:
+        return [path]
+
+    paths_to_end = []
+    for next_cave in path.last_cave.connects:
+        if path.can_visit(next_cave):
+            paths_to_end += extend_path_to_end(path.add_cave(next_cave))
+    return paths_to_end
+
+
 def p1p2(input_file: str) -> tuple[int, int]:
-    graph: GraphType = {}
-    with open(input_file) as f:
-        for line in f:
-            n1_name, n2_name = line.strip().split('-')
-            n1 = Cave.from_name(n1_name, graph)
-            n2 = Cave.from_name(n2_name, graph)
-            # Don't add links back to start or out of end
-            if not n2.isstart and not n1.isend:
-                n1.add_link(n2)
-            if not n1.isstart and not n2.isend:
-                n2.add_link(n1)
+    graph = graph_from_input(input_file)
     
     complete_paths = extend_path_to_end(Path(Cave.from_name('start', graph),
                                         set()))
