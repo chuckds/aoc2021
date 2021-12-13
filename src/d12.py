@@ -32,7 +32,7 @@ class Cave:
 
 
 class Path:
-    def __init__(self, last_cave: Cave, small_caves_visited: set[str],
+    def __init__(self, last_cave: Cave, small_caves_visited: frozenset[str],
                  visited_small_twice: bool = False) -> None:
         self.last_cave = last_cave
         self.small_caves_visited = small_caves_visited
@@ -46,7 +46,7 @@ class Path:
                 has_visited_small_twice = True
             else:
                 # Only create a new set if we need to
-                small_caves_visited = small_caves_visited | set([cave.name])
+                small_caves_visited = small_caves_visited | frozenset([cave.name])
 
         return Path(cave, small_caves_visited, has_visited_small_twice)
 
@@ -76,7 +76,7 @@ def p1p2_nonrecursive(input_file: str) -> tuple[int, int]:
     graph = graph_from_input(input_file)
 
     complete_paths = []
-    paths = [Path(Cave.from_name('start', graph), set())]
+    paths = [Path(Cave.from_name('start', graph), frozenset())]
     while paths:
         path = paths.pop()
         if path.last_cave.isend:
@@ -105,7 +105,7 @@ def p1p2(input_file: str) -> tuple[int, int]:
     graph = graph_from_input(input_file)
     
     complete_paths = extend_path_to_end(Path(Cave.from_name('start', graph),
-                                        set()))
+                                        frozenset()))
 
     return (len([p for p in complete_paths if not p.has_visited_small_twice]),
             len(complete_paths))
