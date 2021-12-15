@@ -22,13 +22,7 @@ def neighbours(point: Point, size: Point) -> Iterable[Point]:
             yield Point(new_x, new_y)
 
 
-def p1p2(input_file: str) -> tuple[int, int]:
-    rows = []
-    with open(input_file) as f:
-        for line in f:
-            rows.append([int(char) for char in line.strip()])
-    size = Point(len(rows[0]), len(rows))
-    
+def lowest_risk_get(rows: list[list[int]], size: Point) -> int:
     destination = Point(size.x - 1, size.y - 1)
     reachable_positions: dict[Point, int] = {Point(0, 0) : 0}
     lowest_risk_known: dict[Point, int] = {}
@@ -48,8 +42,38 @@ def p1p2(input_file: str) -> tuple[int, int]:
                     # First time we can reach this point or better risk score
                     # than how we could reach it before
                     reachable_positions[point] = risk_to_point
+    return lowest_risk_to_dest
 
-    return (lowest_risk_to_dest, 0)
+
+def p1p2(input_file: str) -> tuple[int, int]:
+    rows = []
+    with open(input_file) as f:
+        for line in f:
+            rows.append([int(char) for char in line.strip()])
+
+    size = Point(len(rows[0]), len(rows))
+    p1_lowest_risk = lowest_risk_get(rows, size)
+
+    # p2
+    new_size = Point(size.x * 5, size.y * 5)
+    new_rows = []
+    # Extend across
+    for row in rows:
+        new_row = row * 5
+        for x in range(size.x):
+            for repeat in range(1, 5):
+                new_row[x + (repeat * size.x)] = ((row[x] + repeat - 1) % 9) + 1
+        new_rows.append(new_row)
+    # Now extend down
+    for repeat in range(1, 5):
+        for y in range(size.y):
+            new_row = new_rows[y][:]
+            for x in range(new_size.x):
+                new_row[x] = ((new_rows[y][x] + repeat - 1) % 9) + 1
+            new_rows.append(new_row)
+    p2_lowest_risk = lowest_risk_get(new_rows, new_size)
+
+    return (p1_lowest_risk, p2_lowest_risk)
 
 
 def main(cli_args: list[str]) -> int:
