@@ -31,8 +31,7 @@ def p1p2(input_file: str) -> tuple[int, int]:
 def main(cli_args: list[str]) -> int:
     start = time.perf_counter()
     print(p1p2(cli_args[0]))
-    stop = time.perf_counter()
-    print(f"Elapsed: {stop - start:.6f}s")
+    print(f"Elapsed: {time.perf_counter() - start:.6f}s")
     return 0
 
 

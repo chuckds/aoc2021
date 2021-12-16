@@ -7,16 +7,17 @@ from __future__ import annotations
 
 import sys
 import time
+import dataclasses
 import collections
 
 
+@dataclasses.dataclass
 class PatternNode:
-    def __init__(self, patten: str) -> None:
-        self.pattern = patten
-        self.path_visits = 0
-        self.paths = 0
-        self.new_paths = 0
-        self.connects: list[PatternNode] = []
+    pattern: str
+    path_visits: int = 0
+    paths: int = 0
+    new_paths: int = 0
+    connects: list[PatternNode] = dataclasses.field(default_factory=list)
 
     def __hash__(self) -> int:
         return hash(self.pattern)
@@ -27,21 +28,23 @@ class PatternNode:
         # so each char in this pattern gets that score
         for char in self.pattern:
             score[char] += self.paths
-        # Every time this pattern has been "passed through" the middle characters
+        # Every time this pattern has been "passed through" the middle chars
         # will have been double counted so remove those from the score
         for char in self.pattern[1:-1]:
             score[char] -= self.path_visits
         return score
 
     @classmethod
-    def from_pattern(cls, pattern: str, graph: dict[str, PatternNode]) -> PatternNode:
+    def from_pattern(cls, pattern: str,
+                     graph: dict[str, PatternNode]) -> PatternNode:
         if pattern not in graph:
             graph[pattern] = cls(pattern)
         return graph[pattern]
 
 
 class PolymerGraph:
-    def __init__(self, head_pattern: str, polymer_mapping: dict[str, str]) -> None:
+    def __init__(self, head_pattern: str,
+                 polymer_mapping: dict[str, str]) -> None:
         self.head_pattern = head_pattern
         self.polymer_mapping = polymer_mapping
         self.graph: dict[str, PatternNode] = {}
@@ -51,11 +54,13 @@ class PolymerGraph:
         nodes_to_walk = {head_node}
         while nodes_to_walk:
             node = nodes_to_walk.pop()
-            # Loop through each character pair in this pattern and add a connection
-            # to the resulting string
+            # Loop through each character pair in this pattern and add a
+            # connection to the resulting string
             for pair_num in range(len(node.pattern) - 1):
-                connect_pattern = self.polymer_mapping[node.pattern[pair_num:pair_num + 2]]
-                connect_node = PatternNode.from_pattern(connect_pattern, self.graph)
+                connect_pattern = self.polymer_mapping[
+                    node.pattern[pair_num:pair_num + 2]]
+                connect_node = PatternNode.from_pattern(connect_pattern,
+                                                        self.graph)
                 node.connects.append(connect_node)
                 if not connect_node.connects:
                     # Hasn't been walked yet so add it to the set to do so
