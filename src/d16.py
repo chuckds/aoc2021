@@ -16,14 +16,14 @@ class Packet:
     read_posn: int = 0
 
     type_map: ClassVar[dict[int, Callable[[list[int]], int]]] = {
-        0 : sum,
-        1 : math.prod,
-        2 : min,
-        3 : max,
-        4 : lambda pak_vals: pak_vals[0],
-        5 : lambda pak_vals: 1 if pak_vals[0] > pak_vals[1] else 0,
-        6 : lambda pak_vals: 1 if pak_vals[0] < pak_vals[1] else 0,
-        7 : lambda pak_vals: 1 if pak_vals[0] == pak_vals[1] else 0,
+        0: sum,
+        1: math.prod,
+        2: min,
+        3: max,
+        4: lambda pak_vals: pak_vals[0],
+        5: lambda pak_vals: 1 if pak_vals[0] > pak_vals[1] else 0,
+        6: lambda pak_vals: 1 if pak_vals[0] < pak_vals[1] else 0,
+        7: lambda pak_vals: 1 if pak_vals[0] == pak_vals[1] else 0,
     }
 
     def read_str(self, len: int) -> str:
@@ -40,12 +40,12 @@ def get_packet_info(p: Packet) -> tuple[int, int]:
     pak_type = p.read_int(3)
     if pak_type == 4:
         # Literal number
-        num_bin_string = ''
+        num_bin_string = ""
         last = False
         while not last:
             num_group = p.read_str(5)
             num_bin_string += num_group[1:]
-            last = num_group[0] == '0'
+            last = num_group[0] == "0"
         values = [int(num_bin_string, 2)]
     else:
         # Subpackets
@@ -74,8 +74,9 @@ def p1p2(input_file: str) -> tuple[list[int], list[int]]:
     with open(input_file) as f:
         for line in f:
             hex_string = line.strip()
-            if hex_string[0] != '#':
-                bin_string = ''.join([f"{int(char, 16):04b}" for char in hex_string])
+            if hex_string[0] != "#":
+                bin_string = "".join([f"{int(char, 16):04b}"
+                                      for char in hex_string])
                 version_sum, value = get_packet_info(Packet(bin_string))
                 version_sums.append(version_sum)
                 values.append(value)
