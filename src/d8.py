@@ -6,24 +6,26 @@ Advent Of Code 2021 Day 8
 import sys
 import time
 import collections
+import dataclasses
 
 
-numbers_to_unique_num_segments = {
-    1 : 2,
-    4 : 4,
-    7 : 3,
-    8 : 7,
+num_to_unique_num_segments = {
+    1: 2,
+    4: 4,
+    7: 3,
+    8: 7,
 }
 
 
+@dataclasses.dataclass
 class WireSegment:
-    def __init__(self) -> None:
-        self.txt_to_num: dict[str, int] = {}
-        self.known_numbers: dict[int, set[str]] = {}
+    txt_to_num: dict[str, int] = dataclasses.field(default_factory=dict)
+    known_num: dict[int, set[str]] = \
+        dataclasses.field(default_factory=dict)
 
     def add_num_to_txt(self, num: int, txt: set[str]) -> None:
         self.txt_to_num[''.join(sorted(txt))] = num
-        self.known_numbers[num] = txt
+        self.known_num[num] = txt
 
     def solve(self, signal_patterns: list[str]) -> None:
         real_to_broken_seg = {}
@@ -32,22 +34,28 @@ class WireSegment:
             signals_by_len[len(signal_str)].append(set(signal_str))
 
         # Add the numbers with unique number of segments used: 1, 4, 7 and 8
-        for number, num_segments in numbers_to_unique_num_segments.items():
+        for number, num_segments in num_to_unique_num_segments.items():
             self.add_num_to_txt(number, signals_by_len[num_segments][0])
 
         # Find the segments that the signals of length 6 have in common
         # This translates to the numbers 0, 6 and 9
         # The true segments these have in common are a, b, f and g
-        len6_in_common = set.intersection(*[signal for signal in signals_by_len[6]])
+        len6_in_common = set.intersection(
+                                     *[signal for signal in signals_by_len[6]])
 
-        # Since 7 uses segments a, c and f taking out the above leaves segment c
-        real_to_broken_seg['c'] = (self.known_numbers[7] - len6_in_common).pop()
+        # Since 7 uses segments a, c and f taking out the above leaves
+        # segment c
+        real_to_broken_seg['c'] = (
+                  self.known_num[7] - len6_in_common).pop()
         # Now 'c' is known the other segment for 1 is 'f'
-        real_to_broken_seg['f'] = (self.known_numbers[1] - set(real_to_broken_seg['c'])).pop()
-        # Segments in 4 not used by 1 are b and d - of these only b is in len6_in_common leaving d
-        real_to_broken_seg['d'] = (self.known_numbers[4] - self.known_numbers[1] - len6_in_common).pop()
+        real_to_broken_seg['f'] = (
+                  self.known_num[1] - set(real_to_broken_seg['c'])).pop()
+        # Segments in 4 not used by 1 are b and d - of these only b is in
+        # len6_in_common leaving d
+        real_to_broken_seg['d'] = (
+                  self.known_num[4] - self.known_num[1] - len6_in_common).pop()
 
-        # Work out which of the 3 numbers that use 5 segments (2, 3 and 5) are which
+        # Identify the 3 numbers that use 5 segments (2, 3 and 5)
         for signal in signals_by_len[5]:
             if real_to_broken_seg['c'] not in signal:
                 # Only 5 doesn't use segment c
@@ -59,7 +67,7 @@ class WireSegment:
                 # Only 3 uses both c and f
                 self.add_num_to_txt(3, signal)
 
-        # Work out which of the 3 numbers that use 6 segments (0, 6 and 9) are which
+        # Identify the 3 numbers that use 6 segments (0, 6 and 9)
         for signal in signals_by_len[6]:
             if real_to_broken_seg['c'] not in signal:
                 # Only 6 doesn't use c
@@ -86,10 +94,10 @@ def p1p2(input_file: str) -> tuple[int, int]:
             # Concatenate each digit in a string to get the actual value
             output_val_str = ''
             for output_value in output_values.split():
-                output_number = wire_segment.decode(output_value)
+                num = wire_segment.decode(output_value)
                 # Part 1 work
-                unique_count += 1 if output_number in numbers_to_unique_num_segments else 0
-                output_val_str += str(output_number)
+                unique_count += 1 if num in num_to_unique_num_segments else 0
+                output_val_str += str(num)
             output_value_sum += int(output_val_str)
 
     return unique_count, output_value_sum
