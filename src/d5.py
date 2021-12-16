@@ -8,18 +8,15 @@ from __future__ import annotations
 import sys
 import time
 import collections
-import dataclasses
+
 from typing import Iterator
 
 
-@dataclasses.dataclass
-class Point:
-    x: int
-    y: int
+Point = collections.namedtuple('Point', ['x', 'y'])
 
-    @classmethod
-    def from_str(cls, point_str: str) -> Point:
-        return cls(int(point_str.split(',')[0]), int(point_str.split(',')[1]))
+
+def point_from_str(point_str: str) -> Point:
+    return Point(int(point_str.split(',')[0]), int(point_str.split(',')[1]))
 
 
 class Line:
@@ -28,13 +25,14 @@ class Line:
         self.end = end
         self.delta_x = self.end.x - self.start.x
         self.delta_y = self.end.y - self.start.y
-        self.is_45 = self.delta_x and self.delta_y and abs(self.delta_x) == abs(self.delta_y)
+        self.is_45 = (self.delta_x and self.delta_y and
+                      abs(self.delta_x) == abs(self.delta_y))
 
     def points_between(self) -> Iterator[Point]:
         if self.delta_x and self.delta_y and not self.is_45:
             # Diagonal not 45
             return
-        
+
         num_steps = max(abs(self.delta_x), abs(self.delta_y))
         step_x = self.delta_x // num_steps
         step_y = self.delta_y // num_steps
@@ -43,18 +41,20 @@ class Line:
 
     @classmethod
     def from_str(cls, line_str: str) -> Line:
-        return cls(*[Point.from_str(point_str) for point_str in line_str.split(' -> ')])
+        return cls(*[point_from_str(point_str)
+                     for point_str in line_str.split(' -> ')])
 
 
 def p1p2(input_file: str) -> tuple[int, int]:
-    grid: dict[tuple[int, int], collections.Counter[str]] = collections.defaultdict(collections.Counter)
+    grid: dict[tuple[int, int], collections.Counter[str]] = \
+                                   collections.defaultdict(collections.Counter)
 
     with open(input_file) as f:
         for line_str in f:
             line = Line.from_str(line_str)
             count = 'diag' if line.is_45 else 'h_and_v'
             for point in Line.from_str(line_str).points_between():
-                grid[(point.x, point.y)].update({count : 1})
+                grid[(point.x, point.y)].update({count: 1})
 
     results: list[int] = [0, 0]
     for counter in grid.values():
@@ -64,7 +64,7 @@ def p1p2(input_file: str) -> tuple[int, int]:
         elif (counter['h_and_v'] + counter['diag']) >= 2:
             results[1] += 1
 
-    return tuple(results) # type: ignore
+    return (results[0], results[1])
 
 
 def main(cli_args: list[str]) -> int:
