@@ -74,12 +74,11 @@ def p1p2(input_file: str) -> tuple[list[int], list[int]]:
     with open(input_file) as f:
         for line in f:
             hex_string = line.strip()
-            if hex_string[0] != "#":
-                bin_string = "".join([f"{int(char, 16):04b}"
-                                      for char in hex_string])
-                version_sum, value = get_packet_info(Packet(bin_string))
-                version_sums.append(version_sum)
-                values.append(value)
+            bin_string = "".join([f"{int(char, 16):04b}"
+                                  for char in hex_string])
+            version_sum, value = get_packet_info(Packet(bin_string))
+            version_sums.append(version_sum)
+            values.append(value)
     return (version_sums, values)
 
 
