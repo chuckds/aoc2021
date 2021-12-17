@@ -7,7 +7,7 @@ import sys
 import math
 import time
 
-from typing import NamedTuple, cast
+from typing import NamedTuple, cast, Iterable
 
 
 class Point(NamedTuple):
@@ -15,21 +15,24 @@ class Point(NamedTuple):
     y: int
 
 
+def probe_posns(start: Point, v_init: Point, max_steps: int) -> Iterable[Point]:
+    probe_posn = start
+    v = v_init
+    for _ in range(0, max_steps):
+        probe_posn = Point(probe_posn.x + v.x, probe_posn.y + v.y)
+        yield probe_posn
+        v = Point((v.x - 1) if v.x else 0, v.y - 1)
+
+
 def hits_target(velocity: Point, target_xs: tuple[int, int],
                 target_ys: tuple[int, int], max_steps: int) -> bool:
-    probe_posn = Point(0, 0)
-    x_vel_i, y_vel_i = velocity.x, velocity.y
-    for _ in range(0, max_steps):
-        probe_posn = Point(probe_posn.x + x_vel_i,
-                           probe_posn.y + y_vel_i)
+    for probe_posn in probe_posns(Point(0, 0), velocity, max_steps):
         if (min(target_xs) <= probe_posn.x <= max(target_xs) and
             min(target_ys) <= probe_posn.y <= max(target_ys)):
             return True
-        if (max(target_xs) < probe_posn.x or min(target_ys) > probe_posn.y):
+        if max(target_xs) < probe_posn.x or min(target_ys) > probe_posn.y:
             # Overshoot
             return False
-        y_vel_i -= 1
-        x_vel_i = (x_vel_i - 1) if x_vel_i else 0
     return False
 
 
