@@ -11,7 +11,12 @@ src/d2.py input/d2
 ```
 
 Run tests with:
-'''
-src/check.sh
-'''
-This runs mypy and pytest.
+```
+./Taskfile check
+```
+This runs mypy and pytest. Also set up your repo with the precommit check or
+collect code coverage
+```
+./Taskfile initrepo
+./Taskfile coverage
+```
