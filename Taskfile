@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# Stop on failure
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+
+function initrepo {
+    ln -s ${REPO_ROOT}/Taskfile ${REPO_ROOT}/.git/hooks/pre-commit
+}
+
+function check {
+    echo "Run Taskfile help to see other task you can run"
+    echo "running default of precommit checks"
+    mypy --strict ${REPO_ROOT}/src/*.py
+    pytest ${REPO_ROOT}/src
+}
+
+function coverage {
+    python3 -m coverage run -m pytest ${REPO_ROOT}/src
+    python3 -m coverage html -d ~/WWW/aoc/coverage
+}
+
+function newday {
+    if [ -z "$1" ]; then
+        echo "Specify a day"
+        return 2
+    fi
+
+    NEW_DAY=$1
+    echo $NEW_DAY
+    cp ${REPO_ROOT}/src/d2.py ${REPO_ROOT}/src/${NEW_DAY}.py
+    touch ${REPO_ROOT}/input/${NEW_DAY}
+    touch ${REPO_ROOT}/input/${NEW_DAY}-example
+    echo "#${NEW_DAY}p1p2 ${NEW_DAY}-example (0, 0)" >> ${REPO_ROOT}/answers
+    echo "#${NEW_DAY}p1p2 ${NEW_DAY} (0, 0)" >> ${REPO_ROOT}/answers
+    git add ${REPO_ROOT}/src/${NEW_DAY}.py ${REPO_ROOT}/input/${NEW_DAY} ${REPO_ROOT}/input/${NEW_DAY}-example
+    code ${REPO_ROOT}/src/${NEW_DAY}.py
+    code ${REPO_ROOT}/input/${NEW_DAY}
+    code ${REPO_ROOT}/input/${NEW_DAY}-example
+}
+
+function help {
+    echo "$0 <task> <args>"
+    echo "Tasks:"
+    compgen -A function | cat -n
+}
+
+TIMEFORMAT="Task completed in %3lR"
+time "${@:-check}"

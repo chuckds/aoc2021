@@ -72,24 +72,6 @@ def graph_from_input(input_file: str) -> GraphType:
     return graph
 
 
-def p1p2_nonrecursive(input_file: str) -> tuple[int, int]:
-    graph = graph_from_input(input_file)
-
-    complete_paths = []
-    paths = [Path(Cave.from_name('start', graph), frozenset())]
-    while paths:
-        path = paths.pop()
-        if path.last_cave.isend:
-            complete_paths.append(path)
-        else:
-            paths += [path.add_cave(cave)
-                      for cave in path.last_cave.connects
-                      if path.can_visit(cave)]
-
-    return (len([p for p in complete_paths if not p.has_visited_small_twice]),
-            len(complete_paths))
-
-
 def extend_path_to_end(path: Path) -> list[Path]:
     if path.last_cave.isend:
         return [path]
@@ -103,7 +85,6 @@ def extend_path_to_end(path: Path) -> list[Path]:
 
 def p1p2(input_file: str) -> tuple[int, int]:
     graph = graph_from_input(input_file)
-    
     complete_paths = extend_path_to_end(Path(Cave.from_name('start', graph),
                                         frozenset()))
 
