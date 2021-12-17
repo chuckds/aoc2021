@@ -41,6 +41,23 @@ function newday {
     code ${REPO_ROOT}/input/${NEW_DAY}-example
 }
 
+
+function timeday {
+    if [ -z "$1" ]; then
+        echo "Specify a day"
+        return 2
+    fi
+
+    DAY=$1
+    pushd ${REPO_ROOT}/src
+    python3 -m timeit "import ${DAY}; ${DAY}.p1p2('../input/${DAY}')"
+    popd
+}
+
+function testdays {
+    pytest --durations=0 -k test_puzzles ${REPO_ROOT}/src
+}
+
 function help {
     echo "$0 <task> <args>"
     echo "Tasks:"
