@@ -21,7 +21,7 @@ Matrix = Sequence[Sequence[int]]
 
 def get_rotation_matrix(yaw: float, pitch: float, roll: float) -> Matrix:
     res = [
-        [math.cos(yaw) * math.cos(pitch), math.cos(yaw) * math.sin(pitch) * math.sin(roll) - math.sin(yaw) * math.cos(roll), math.cos(yaw) * math.sin(pitch) * math.cos(roll) + math.sin(yaw) * math.sin(roll)], 
+        [math.cos(yaw) * math.cos(pitch), math.cos(yaw) * math.sin(pitch) * math.sin(roll) - math.sin(yaw) * math.cos(roll), math.cos(yaw) * math.sin(pitch) * math.cos(roll) + math.sin(yaw) * math.sin(roll)],
         [math.sin(yaw) * math.cos(pitch), math.sin(yaw) * math.sin(pitch) * math.sin(roll) + math.cos(yaw) * math.cos(roll), math.sin(yaw) * math.sin(pitch) * math.cos(roll) - math.cos(yaw) * math.sin(roll)],
         [-1 * math.sin(pitch), math.cos(pitch) * math.sin(roll), math.cos(pitch) * math.cos(roll)],
     ]
@@ -34,8 +34,8 @@ def get_90_rotations() -> set[Matrix]:
     for yaw in rotations:
         for pitch in rotations:
             for roll in rotations:
-                matricies.add(get_rotation_matrix(
-                    math.radians(yaw), math.radians(pitch), math.radians(roll)))
+                matricies.add(tuple(tuple(row) for row in get_rotation_matrix(
+                    math.radians(yaw), math.radians(pitch), math.radians(roll))))
     return matricies
 
 
@@ -84,10 +84,12 @@ def rotate_vector(rot_mat: Matrix, vector: Coord) -> Coord:
 class Scanner:
     id: int
     beacons: list[Coord] = dataclasses.field(default_factory=list)
-    offsets_from: dict[int, tuple[Coord,Matrix]] = dataclasses.field(default_factory=dict)
+    offsets_from: dict[int, tuple[Coord, Matrix]] = dataclasses.field(default_factory=dict)
     mag_to_beacons: Optional[dict[float, set[Coord]]] = None
     beacon_to_mag: Optional[dict[Coord, dict[float, Coord]]] = None
     translated_beacons: set[Coord] = dataclasses.field(default_factory=set)
+    translated_into: set[int] = dataclasses.field(default_factory=set)
+    translated_to: Optional[Scanner] = None
 
     def calc_mags(self) -> None:
         self.mag_to_beacons = collections.defaultdict(set)
@@ -98,6 +100,22 @@ class Scanner:
             self.mag_to_beacons[mag].add(beacon2)
             self.beacon_to_mag[beacon1][mag] = beacon2
             self.beacon_to_mag[beacon2][mag] = beacon1
+
+    def collate(self, graph: dict[int, Scanner], into: Optional[Scanner] = None) -> None:
+        if into:
+            into_missing = set(self.translated_into) - set(into.translated_into)
+            if into_missing:
+                print(f"Beacons known to {self.id} Missing from {into.id}")
+                offset, rotation = self.offsets_from[into.id]
+                translated = {rotate_vector(rotation, beacon) + offset
+                              for beacon in self.translated_beacons}
+                into.translated_beacons.update(translated)
+                into.translated_into |= set(self.translated_into)
+        for scanner_id in list(self.translated_into):
+            translated_scanner = graph[scanner_id]
+            print(f"Walking down to {translated_scanner.id} from {self.id}")
+            translated_scanner.collate(graph, self)
+        print(f"done in {self.id}")
 
 
 def p1p2(input_file: str) -> tuple[int, int]:
@@ -118,15 +136,14 @@ def p1p2(input_file: str) -> tuple[int, int]:
         scanner.calc_mags()
         all_points.update({(scanner.id, beacon) for beacon in scanner.beacons})
 
-    unique_points = all_points
     for scanner1, scanner2 in combinations(scanners):
+        if scanner2.translated_to:
+            continue
         # Do theses scans have at least 12 beacons in common?
         # 12 beacons have triangular_num(12 - 1) (66) paths between them so
         # scanners would need at have at lease this many magnitudes in common
         mags_in_common = set(scanner1.mag_to_beacons.keys()) & set(scanner2.mag_to_beacons.keys())
-        s2_beacons_in_common = set()
         for mag in mags_in_common:
-            s2_beacons_in_common.update(scanner2.mag_to_beacons[mag])
             if len(scanner1.mag_to_beacons[mag]) == 2 and len(scanner2.mag_to_beacons[mag]) == 2:
                 # Let's try and find s2 offset from s1
                 s1bs = list(scanner1.mag_to_beacons[mag])
@@ -162,10 +179,19 @@ def p1p2(input_file: str) -> tuple[int, int]:
             overlap = scanner1.translated_beacons & s2_translated
             print(f"{len(overlap)=}")
             scanner1.translated_beacons.update(s2_translated)
+            scanner1.translated_into.add(scanner2.id)
+            scanner2.translated_to = scanner1
 
-        unique_points.difference_update({(scanner2.id, beacon) for beacon in s2_beacons_in_common})
+    scanner_graph = {s.id: s for s in scanners}
+    head = scanner_graph[0]
+    print(f"{len(head.translated_into)=}")
+    while (len(head.translated_into) + 1) != len(scanners):
+        head.collate(scanner_graph)
+        print(f"{len(head.translated_into)=} {len(scanners)=}")
 
-    return (len(unique_points), 0)
+    print(f"{len(head.translated_beacons)=}")
+
+    return (len(head.translated_beacons), 0)
 
 
 def main(cli_args: list[str]) -> int:
