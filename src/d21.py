@@ -30,24 +30,24 @@ class Play(NamedTuple):
 
 def p2(input_file: str) -> int:
     with open(input_file) as f:
-        players = [Play(int(line.strip().split()[-1])) for line in f]
+        players = tuple([Play(int(line.strip().split()[-1])) for line in f])
 
     game_state_counts = collections.defaultdict(int)
-    game_state_counts[players[0], players[1]] = 1
+    game_state_counts[(players[0], players[1]), 0] = 1
     p1_wins = 0
     dice_sums = collections.Counter(three_dice())
     while game_state_counts:
-        next_round: collections.defaultdict[tuple[Play, Play], int] = collections.defaultdict(int)
-        for (play1, play2), count in game_state_counts.items():
-            for p1_dice, p1_dice_count in dice_sums.items():
-                p1_new = play1.with_roll(p1_dice)
-                if p1_new.score >= 21:
-                    p1_wins += count * p1_dice_count
+        next_round: collections.defaultdict[tuple[tuple[Play, Play], int], int] = collections.defaultdict(int)
+        for (players, p1_index), count in game_state_counts.items():
+            for dice_roll, dice_count in dice_sums.items():
+                new_player = players[0].with_roll(dice_roll)
+                if new_player.score >= 21:
+                    if p1_index == 0:
+                        p1_wins += count * dice_count
                 else:
-                    for p2_dice, p2_dice_count in dice_sums.items():
-                        p2_new = play2.with_roll(p2_dice)
-                        if p2_new.score < 21:
-                            next_round[(p1_new, p2_new)] += count * p2_dice_count * p1_dice_count
+                    # Didn't win keep on playing
+                    # Swap the players around keeping track of which one is p1
+                    next_round[((players[1], new_player), int(not p1_index))] += count * dice_count
         game_state_counts = next_round
 
     return p1_wins
@@ -58,6 +58,10 @@ class Player:
     position: int
     score: int = 0
 
+    def with_roll(self, dice_roll: int) -> None:
+        self.position = ((self.position - 1 + dice_roll) % 10) + 1
+        self.score += self.position
+
 
 def p1(input_file: str) -> int:
     with open(input_file) as f:
@@ -66,8 +70,7 @@ def p1(input_file: str) -> int:
     die = iter(range(1, 1001))
     while all(player.score < 1000 for player in players):
         for player in players:
-            player.position = ((player.position - 1 + next(die) + next(die) + next(die)) % 10) + 1
-            player.score += player.position
+            player.with_roll(next(die) + next(die) + next(die))
             if player.score >= 1000:
                 break
 
