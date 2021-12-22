@@ -49,7 +49,6 @@ def hits_target(velocity: Point, target: Area, max_steps: int) -> bool:
 def p1p2(input_file: str) -> tuple[int, int]:
     with open(input_file) as f:
         xs_str, ys_str = next(f)[len("target area: "):].strip().split(', ')
-        # Is there are way of doing this without the cast?
         xs = tuple(int(val) for val in xs_str[2:].split('..')[:2])
         ys = tuple(int(val) for val in ys_str[2:].split('..')[:2])
         target = Area(Point(min(xs), min(ys)), Point(max(xs), max(ys)))
