@@ -12,7 +12,7 @@ src/d2.py input/d2
 
 Run tests with:
 ```
-./Taskfile check
+./Taskfile
 ```
 This runs mypy and pytest. Also set up your repo with the precommit check or
 collect code coverage
