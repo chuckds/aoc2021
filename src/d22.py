@@ -166,6 +166,42 @@ def p1p2_getex3(input_file: str) -> tuple[int, int]:
 def add_vol_to_vols(to_add: Volume, vols: list[Volume]) -> tuple[list[Volume], list[Volume]]:
     print(f"Adding {to_add} {len(vols)=}")
     new_vols = []
+    all_dj = True
+    for vol_idx, vol in enumerate(vols):
+        if vol.is_disjoint(to_add):
+            new_vols.append(vol)
+        elif vol.contains(to_add):
+            return vols[:]
+        else:
+            all_dj = False
+            new_vols.append(vol)
+            left_over_vols = [v for v in vol.add(to_add) if not vol.contains(v)]
+            for left_over_vol in left_over_vols:
+                new_vols.extend(add_vol_to_vols(left_over_vol, vols[vol_idx + 1:]))
+    if all_dj:
+        new_vols.append(to_add)
+
+    return new_vols
+
+
+def subtract_vol_from_vols(to_subtract: Volume, vols: list[Volume]) -> list[Volume]:
+    print(f"Sub {to_subtract} {len(vols)=}")
+    new_vols = []
+    for vol in vols:
+        if vol.is_disjoint(to_subtract):
+            new_vols.append(vol)
+        elif to_subtract.contains(vol):
+            # Wipe this volume from the list
+            pass
+        else:
+            new_vols.extend(vol.subtract(to_subtract))
+
+    return new_vols
+
+
+def add_vol_to_vols_i(to_add: Volume, vols: list[Volume]) -> tuple[list[Volume], list[Volume]]:
+    print(f"Adding {to_add} {len(vols)=}")
+    new_vols = []
     intersections = []
     for vol in vols:
         if vol.is_disjoint(to_add):
@@ -182,7 +218,7 @@ def add_vol_to_vols(to_add: Volume, vols: list[Volume]) -> tuple[list[Volume], l
     return new_vols, intersections
 
 
-def subtract_vol_from_vols(to_subtract: Volume, vols: list[Volume]) -> tuple[list[Volume], list[Volume]]:
+def subtract_vol_from_vols_i(to_subtract: Volume, vols: list[Volume]) -> tuple[list[Volume], list[Volume]]:
     print(f"Sub {to_subtract} {len(vols)=}")
     new_vols = []
     intersections = []
@@ -210,19 +246,13 @@ def p1p2(input_file: str) -> tuple[int, int]:
             volumes.append((action == "on", Volume(*dimention_ranges)))
 
     on_vols: list[Volume] = []
-    to_subract: list[Volume] = []
     for turn_on, volume in volumes:
         if turn_on:
-            on_vols, new_to_subract = add_vol_to_vols(volume, on_vols)
+            on_vols = add_vol_to_vols(volume, on_vols)
         else:
-            on_vols, new_to_subract = subtract_vol_from_vols(volume, on_vols)
-            to_subract, new_to_add = subtract_vol_from_vols(volume, to_subract)
-            on_vols.extend(new_to_add)
-        to_subract.extend(new_to_subract)
-        print(f"{len(to_subract)=}")
-
+            on_vols = subtract_vol_from_vols(volume, on_vols)
+    print(on_vols)
     num_points_on = sum(vol.num_points_within() for vol in on_vols)
-    num_points_on -= sum(vol.num_points_within() for vol in to_subract)
 
     on_points: set[tuple[int, int, int]] = set()
     for turn_on, volume in [(to, v) for to, v in volumes if v.is_valid()]:
