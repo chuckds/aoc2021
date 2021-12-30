@@ -10,8 +10,6 @@ import time
 from typing import NamedTuple, Iterable, Optional
 
 
-Hallway = tuple[str, str, str, str, str, str, str]
-
 room_map = {
     'A': 0,
     'B': 1,
@@ -32,7 +30,7 @@ distances = [  # hallway then room
 
 
 class AmphipodState(NamedTuple):
-    hallway: Hallway
+    hallway: tuple[str, str, str, str, str, str, str]
     rooms: tuple[tuple[str, str], tuple[str, str], tuple[str, str], tuple[str, str]]
 
     def reachable(self, hallway_posn: int, room: int) -> bool:
