@@ -7,9 +7,10 @@ from __future__ import annotations
 import sys
 import math
 import time
+import itertools
 import collections
 
-from typing import NamedTuple, Iterable
+from typing import NamedTuple, Iterable, Optional
 
 
 class Range(NamedTuple):
@@ -19,21 +20,18 @@ class Range(NamedTuple):
     def length(self) -> int:
         return self.max - self.min + 1
 
+    def merge(self, other: Range) -> Optional[Range]:
+        if self.min == other.max + 1:
+            return Range(other.min, self.max)
+        elif self.max + 1 == other.min:
+            return Range(self.min, other.max)
+        return None
+
     def contains(self, other: Range) -> bool:
         return all(self.min <= value <= self.max for value in other)
 
     def is_disjoint(self, other: Range) -> bool:
         return self.min > other.max or self.max < other.min
-
-    def intersection(self, other: Range) -> Range:
-        return Range(max(self.min, other.min), min(self.max, other.max))
-
-    def add(self, other: Range) -> list[Range]:
-        if self.is_disjoint(other):
-            return [self, other]
-        else:
-            # Overlap
-            return [Range(min(self.min, other.min), max(self.max, other.max))]
 
     def subtract(self, other: Range) -> list[Range]:
         if self.is_disjoint(other):
@@ -83,6 +81,25 @@ class Volume(NamedTuple):
     def is_valid(self) -> bool:
         return all(-50 <= val <= 50 for d_range in self for val in d_range)
 
+    def merge(self, other: Volume) -> Optional[Volume]:
+        new_ranges = []
+        merged_range = None
+        for self_range, other_range in zip(self, other):
+            if self_range == other_range:
+                new_ranges.append(self_range)
+            elif merged_range is None:
+                merged_range = self_range.merge(other_range)
+                if merged_range is None:
+                    # All ranges have to either be mergable or equal this is
+                    # neither so this volume can't be merged
+                    break
+                else:
+                    new_ranges.append(merged_range)
+            else:
+                break
+
+        return Volume(*new_ranges) if len(new_ranges) == 3 else None
+
     def is_disjoint(self, other: Volume) -> bool:
         return any(self_range.is_disjoint(other_range)
                    for self_range, other_range in zip(self, other))
@@ -94,29 +111,24 @@ class Volume(NamedTuple):
         return all(self_range.contains(other_range)
                    for self_range, other_range in zip(self, other))
 
-    def intersection(self, other: Volume) -> Volume:
-        return Volume(*[self_range.intersection(other_range)
-                        for self_range, other_range in zip(self, other)])
-
-    def add(self, other: Volume) -> list[Volume]:
-        if self.contains(other):
-            return [self]
-        elif other.contains(self):
-            return [other]
-        elif self.is_disjoint(other):
-            return [self, other]
-        else:
-            return [volume for volume in self.non_overlapping([self, other])
-                    if self.contains(volume) or other.contains(volume)]
-
     def subtract(self, other: Volume) -> list[Volume]:
         if self.is_disjoint(other):
             return [self]
         elif other.contains(self):  # Handled by case below but this is quicker
             return []
         else:
-            return [volume for volume in self.non_overlapping([self, other])
-                    if self.contains(volume) and not other.contains(volume)]
+            new_vols = [volume for volume in self.non_overlapping([self, other])
+                        if self.contains(volume) and not other.contains(volume)]
+
+            merged: Optional[Volume] = self
+            while merged and len(new_vols) > 1:
+                for vol_a, vol_b in itertools.combinations(new_vols, 2):
+                    merged = vol_a.merge(vol_b)
+                    if merged is not None:
+                        new_vols = [v for v in new_vols if v not in (vol_a, vol_b)]
+                        new_vols.append(merged)
+                        break
+            return new_vols
 
     @classmethod
     def non_overlapping(cls, volumes: Iterable[Volume]) -> Iterable[Volume]:
@@ -125,114 +137,38 @@ class Volume(NamedTuple):
                 for z_range in Range.non_overlapping(vol.z for vol in volumes):
                     yield Volume(x_range, y_range, z_range)
 
-    def coords(self) -> Iterable[tuple[int, int, int]]:
-        for x in range(self.x.min, self.x.max + 1):
-            for y in range(self.y.min, self.y.max + 1):
-                for z in range(self.z.min, self.z.max + 1):
-                    yield (x, y, z)
 
-
-def p1p2_getex3(input_file: str) -> tuple[int, int]:
-    volumes: list[tuple[bool, Volume]] = []
-    with open(input_file) as f:
-        for line in f:
-            action, coord_str = line.strip().split()
-            dimention_ranges = []
-            for dimention_str in coord_str.split(','):
-                dimention_ranges.append(Range(*tuple(int(val) for val in dimention_str[2:].split('..')[:2])))
-            volumes.append((action == "on", Volume(*dimention_ranges)))
-
-    rev_volumes = list(reversed(volumes))
-    num_points_on = 0
-    for test_volume in Volume.non_overlapping([v for _, v in volumes]):
-        for turn_on, volume in rev_volumes:
-            if volume.contains(test_volume):
-                if turn_on:
-                    num_points_on += test_volume.num_points_within()
-                # Stop at the first volume that contains this test
-                # volume since we're iterating over the volumes in reverse
-                break
-
-    on_points: set[tuple[int, int, int]] = set()
-    for turn_on, volume in [(to, v) for to, v in volumes if v.is_valid()]:
-        if turn_on:
-            on_points.update(volume.coords())
-        else:
-            on_points.difference_update(volume.coords())
-
-    return (len(on_points), num_points_on)
-
-
-def add_vol_to_vols(to_add: Volume, vols: list[Volume]) -> tuple[list[Volume], list[Volume]]:
-    print(f"Adding {to_add} {len(vols)=}")
+def add_vol_to_vols(to_add: Volume, vols: list[Volume], start_at: int = 0) -> list[Volume]:
     new_vols = []
-    all_dj = True
-    for vol_idx, vol in enumerate(vols):
-        if vol.is_disjoint(to_add):
-            new_vols.append(vol)
-        elif vol.contains(to_add):
-            return vols[:]
-        else:
-            all_dj = False
-            new_vols.append(vol)
-            left_over_vols = [v for v in vol.add(to_add) if not vol.contains(v)]
-            for left_over_vol in left_over_vols:
-                new_vols.extend(add_vol_to_vols(left_over_vol, vols[vol_idx + 1:]))
-    if all_dj:
+    all_disjoint = True
+    for vol_idx in range(start_at, len(vols)):
+        vol = vols[vol_idx]
+        if vol.contains(to_add):
+            return []
+        elif not vol.is_disjoint(to_add):
+            all_disjoint = False
+            for left_over_vol in to_add.subtract(vol):
+                new_vols.extend(add_vol_to_vols(left_over_vol, vols, vol_idx + 1))
+            break
+    if all_disjoint:
         new_vols.append(to_add)
 
     return new_vols
 
 
 def subtract_vol_from_vols(to_subtract: Volume, vols: list[Volume]) -> list[Volume]:
-    print(f"Sub {to_subtract} {len(vols)=}")
-    new_vols = []
-    for vol in vols:
-        if vol.is_disjoint(to_subtract):
-            new_vols.append(vol)
-        elif to_subtract.contains(vol):
-            # Wipe this volume from the list
-            pass
+    new_vols = [vol.subtract(to_subtract) for vol in vols]
+    return [vol for vol_sublist in new_vols for vol in vol_sublist]
+
+
+def get_number_points_on(volumes: list[tuple[bool, Volume]]) -> int:
+    on_vols: list[Volume] = []
+    for turn_on, volume in volumes:
+        if turn_on:
+            on_vols.extend(add_vol_to_vols(volume, on_vols))
         else:
-            new_vols.extend(vol.subtract(to_subtract))
-
-    return new_vols
-
-
-def add_vol_to_vols_i(to_add: Volume, vols: list[Volume]) -> tuple[list[Volume], list[Volume]]:
-    print(f"Adding {to_add} {len(vols)=}")
-    new_vols = []
-    intersections = []
-    for vol in vols:
-        if vol.is_disjoint(to_add):
-            new_vols.append(vol)
-        elif vol.contains(to_add):
-            return vols[:], []
-        else:
-            new_vols.append(vol)
-            # Keep track of the intersections since these need to be removed
-            # to avoid double counting
-            intersections.append(vol.intersection(to_add))
-    new_vols.append(to_add)
-
-    return new_vols, intersections
-
-
-def subtract_vol_from_vols_i(to_subtract: Volume, vols: list[Volume]) -> tuple[list[Volume], list[Volume]]:
-    print(f"Sub {to_subtract} {len(vols)=}")
-    new_vols = []
-    intersections = []
-    for vol in vols:
-        if vol.is_disjoint(to_subtract):
-            new_vols.append(vol)
-        elif to_subtract.contains(vol):
-            # Wipe this volume from the list
-            pass
-        else:
-            new_vols.append(vol)
-            intersections.append(vol.intersection(to_subtract))
-
-    return new_vols, intersections
+            on_vols = subtract_vol_from_vols(volume, on_vols)
+    return sum(vol.num_points_within() for vol in on_vols)
 
 
 def p1p2(input_file: str) -> tuple[int, int]:
@@ -242,26 +178,14 @@ def p1p2(input_file: str) -> tuple[int, int]:
             action, coord_str = line.strip().split()
             dimention_ranges = []
             for dimention_str in coord_str.split(','):
-                dimention_ranges.append(Range(*tuple(int(val) for val in dimention_str[2:].split('..')[:2])))
+                dimention_ranges.append(Range(*tuple(
+                    int(val) for val in dimention_str[2:].split('..')[:2])))
             volumes.append((action == "on", Volume(*dimention_ranges)))
 
-    on_vols: list[Volume] = []
-    for turn_on, volume in volumes:
-        if turn_on:
-            on_vols = add_vol_to_vols(volume, on_vols)
-        else:
-            on_vols = subtract_vol_from_vols(volume, on_vols)
-    print(on_vols)
-    num_points_on = sum(vol.num_points_within() for vol in on_vols)
-
-    on_points: set[tuple[int, int, int]] = set()
-    for turn_on, volume in [(to, v) for to, v in volumes if v.is_valid()]:
-        if turn_on:
-            on_points.update(volume.coords())
-        else:
-            on_points.difference_update(volume.coords())
-
-    return (len(on_points), num_points_on)
+    p1 = get_number_points_on([(turn_on, v)
+                               for turn_on, v in volumes if v.is_valid()])
+    p2 = get_number_points_on(volumes)
+    return (p1, p2)
 
 
 def main(cli_args: list[str]) -> int:
