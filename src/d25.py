@@ -40,7 +40,7 @@ class SouthSC(SeaCumcumber):
         grid[self.row][self.col] = True
 
 
-def p1p2(input_file: str) -> tuple[int, int]:
+def p1(input_file: str) -> int:
     grid: list[list[bool]] = []
     east_sc: list[SeaCumcumber] = []
     south_sc: list[SeaCumcumber] = []
@@ -74,12 +74,12 @@ def p1p2(input_file: str) -> tuple[int, int]:
                 sc.move(grid, width, height)
         generations += 1
 
-    return (generations, 0)
+    return generations
 
 
 def main(cli_args: list[str]) -> int:
     start = time.perf_counter()
-    print(p1p2(cli_args[0]))
+    print(p1(cli_args[0]))
     print(f"Elapsed: {time.perf_counter() - start:.6f}s")
     return 0
 
