@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import sys
 import time
+import functools
+import collections
 
 from typing import NamedTuple, Iterable, Optional
 
@@ -46,6 +48,36 @@ class AmphipodState(NamedTuple):
 
     def room_has_no_visitors(self, room_idx: int) -> bool:
         return all(char in (room_to_amphi[room_idx], '.') for char in self.rooms[room_idx])
+
+    @functools.cache
+    def cost_to_finish(self) -> int:
+        # Cost to get ampipods from hallway to the first spot in their rooms
+        cost = 0
+        for hallway_idx, amphipod in enumerate(self.hallway):
+            if amphipod != '.':
+                room_idx = room_map[amphipod]
+                cost += (10 ** room_idx) * distances[hallway_idx][room_idx]
+        correct_rooms: dict[int, int] = collections.defaultdict(int)
+        for room_idx, amphipods_in_room in enumerate(self.rooms):
+            visitor_in_room = False
+            for char_idx, amphipod in reversed(list(enumerate(amphipods_in_room))):
+                if amphipod != '.':
+                    desired_room_idx = room_map[amphipod]
+                    if desired_room_idx != room_idx:
+                        visitor_in_room = True
+                        cost += (10 ** desired_room_idx) * (char_idx + 2 + 2 * abs(room_idx - desired_room_idx))
+                    elif visitor_in_room:
+                        # This amphipod is blocking someone in, so cost peeking out of room and back in
+                        cost += (10 ** desired_room_idx) * (char_idx + 4)
+                    else:
+                        # Right room don't move
+                        correct_rooms[desired_room_idx] += 1
+        # We now have the cost to get every ampiod to the first spot in their
+        # room (or stay in their spot)
+        for room_idx, amphipods_in_room in enumerate(self.rooms):
+            slots_to_fill = len(amphipods_in_room) - correct_rooms[room_idx]
+            cost += (10 ** room_idx) * ((slots_to_fill * (slots_to_fill - 1)) // 2)
+        return cost
 
     def moves(self) -> Iterable[tuple[AmphipodState, int]]:
         for hallway_idx, amphipod in enumerate(self.hallway):
@@ -93,9 +125,8 @@ class AmphipodState(NamedTuple):
 def lowest_cost_solution(rooms: list[list[str]]) -> int:
     init_state = AmphipodState(tuple('.' * 7), tuple(''.join(members) for members in zip(*rooms)))  # type: ignore
     destination_state = AmphipodState(tuple('.' * 7), ('A' * len(rooms), 'B' * len(rooms), 'C' * len(rooms), 'D' * len(rooms)))  # type: ignore
-    print(f"{init_state}\n{destination_state}")
 
-    reachable: dict[AmphipodState, tuple[int, Optional[AmphipodState]]] = {init_state: (0, None)}
+    reachable: dict[AmphipodState, tuple[int, Optional[AmphipodState]]] = {init_state: (init_state.cost_to_finish(), None)}
     lowest_cost_known: dict[AmphipodState, tuple[int, Optional[AmphipodState]]] = {}
     while reachable:
         ap_state, (lowest_cost_so_far, previous_state) = min(reachable.items(), key=lambda x: x[1][0])
@@ -105,7 +136,7 @@ def lowest_cost_solution(rooms: list[list[str]]) -> int:
             break
         for new_state, additional_cost in ap_state.moves():
             if new_state not in lowest_cost_known:
-                new_cost_to_state = lowest_cost_so_far + additional_cost
+                new_cost_to_state = lowest_cost_so_far + additional_cost + new_state.cost_to_finish() - ap_state.cost_to_finish()
                 cost_to_state_so_far, _ = reachable.get(new_state, (None, None))
                 if (cost_to_state_so_far is None or
                     new_cost_to_state < cost_to_state_so_far):
