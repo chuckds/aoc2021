@@ -1,5 +1,5 @@
 import re
-import pytest  # type: ignore
+import pytest
 import pathlib
 import importlib
 
@@ -28,7 +28,7 @@ def get_puzzle_info(examples: bool) -> list[tuple[str, str, str, str]]:
     return day_parts
 
 
-@pytest.mark.parametrize("day,part,input_file,result", get_puzzle_info(True))  # type: ignore
+@pytest.mark.parametrize("day,part,input_file,result", get_puzzle_info(True))
 def test_puzzle_examples(day: str, part: str, input_file: str, result: str) -> None:
     day_mod = importlib.__import__(day)
     part_function = getattr(day_mod, part)
@@ -36,7 +36,7 @@ def test_puzzle_examples(day: str, part: str, input_file: str, result: str) -> N
     assert part_function(input_file) == result_val
 
 
-@pytest.mark.parametrize("day,part,input_file,result", get_puzzle_info(False))  # type: ignore
+@pytest.mark.parametrize("day,part,input_file,result", get_puzzle_info(False))
 def test_puzzles(day: str, part: str, input_file: str, result: str) -> None:
     day_mod = importlib.__import__(day)
     part_function = getattr(day_mod, part)
